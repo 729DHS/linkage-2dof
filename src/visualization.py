@@ -231,6 +231,94 @@ def plot_trajectory(
     return ax
 
 
+def plot_all_branches(
+    branch_results: dict,
+    theta_a: float,
+    theta_b: float,
+    params: Optional[MechanismParams] = None,
+) -> plt.Figure:
+    """
+    Plot all valid assembly modes side by side.
+
+    Parameters
+    ----------
+    branch_results : dict
+        Output from solve_all_branches(), mapping (branch_d, branch_f) -> result.
+    theta_a, theta_b : float
+        Motor angles [rad].
+    params : MechanismParams, optional
+
+    Returns
+    -------
+    matplotlib Figure.
+    """
+    valid_branches = [
+        (bd, bf, res)
+        for (bd, bf), res in branch_results.items()
+        if res is not None
+    ]
+    n_valid = len(valid_branches)
+
+    if n_valid == 0:
+        fig, ax = plt.subplots(figsize=(8, 6))
+        ax.text(0.5, 0.5, "No valid assembly modes",
+                ha='center', va='center', fontsize=14)
+        ax.set_title(f"No solutions for "
+                     rf"$\theta_a={np.rad2deg(theta_a):.0f}°$, "
+                     rf"$\theta_b={np.rad2deg(theta_b):.0f}°$")
+        return fig
+
+    cols = min(2, n_valid)
+    rows = (n_valid + cols - 1) // cols
+    fig, axes = plt.subplots(rows, cols, figsize=(9 * cols, 7 * rows))
+    if n_valid == 1:
+        axes = np.array([axes])
+    axes = np.atleast_1d(axes).flatten()
+
+    for idx, (bd, bf, res) in enumerate(valid_branches):
+        ax = axes[idx]
+        plot_mechanism(res, params, ax=ax, show_labels=True,
+                       title="")
+
+        # Determine parallelogram type
+        # Check convexity of O-P1-P4-P3 by cross product sign
+        # Vector O->P1 and O->P3, check if P4 is on same side
+        cross_OP1_OP3 = np.cross(res['P1'], res['P3'])
+        cross_OP1_P1P4 = np.cross(res['P1'], res['P4'] - res['P1'])
+
+        # Check if P4 is roughly P1 + P3 (convex) or not (crossed)
+        p4_expected_convex = res['P1'] + res['P3']
+        dist_convex = np.linalg.norm(res['P4'] - p4_expected_convex)
+        p4_expected_crossed = res['P1'] - res['P3']  # rough check
+        dist_crossed = np.linalg.norm(res['P4'] - p4_expected_crossed)
+
+        if dist_convex < dist_crossed:
+            para1_type = "convex"
+        else:
+            para1_type = "crossed"
+
+        # Similarly for parallelogram P1-P2-P6-P5
+        p6_expected_convex = res['P2'] + res['P5'] - res['P1']
+        dist_c2 = np.linalg.norm(res['P6'] - (res['P5'] + res['P2'] - res['P1']))
+
+        ax.set_title(
+            rf"branch_d={bd:+d}, branch_f={bf:+d}  |  "
+            rf"$\theta_a={np.rad2deg(theta_a):.0f}°$, "
+            rf"$\theta_b={np.rad2deg(theta_b):.0f}°$\n"
+            rf"O-P1-P4-P3: {para1_type}  |  "
+            rf"P7=({res['P7'][0]:.0f}, {res['P7'][1]:.0f}) mm",
+            fontsize=10,
+        )
+
+    # Hide unused axes
+    for idx in range(n_valid, len(axes)):
+        axes[idx].set_visible(False)
+
+    fig.suptitle("All Assembly Modes", fontsize=14, fontweight='bold', y=1.01)
+    fig.tight_layout()
+    return fig
+
+
 def animate_mechanism(
     results: List[Optional[Dict]],
     params: MechanismParams,

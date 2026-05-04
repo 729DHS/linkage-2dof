@@ -80,6 +80,21 @@
 
 ---
 
+### 问题5: 平行四边形凹凸性
+
+**问题**: branch_d=-1 默认对应交叉四边形 (crossed), 不是凸四边形
+
+**解决**: 
+- 默认改为 branch_d=+1 (在 θ_a=0°, θ_b=90° 时对应凸四边形)
+- 添加 `solve_all_branches()` 函数, 一次输出全部 4 种装配模式
+- 添加 `plot_all_branches()` 可视化, 并排显示所有有效解
+- 用 `python main.py branches` 查看所有解
+
+**注意**: convex/crossed 对应的 branch 不是固定的, 随角度变化。
+轨迹跟踪用 continuity tracking (prev_theta_d) 保持一致性。
+
+---
+
 ## 待办 / 未来改进
 
 - [ ] 运动学逆解 (给定 P7 → 反求 θ_a, θ_b)

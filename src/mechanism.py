@@ -163,6 +163,6 @@ def default_params() -> MechanismParams:
         L_P6P7=32.4 + 128,        # EF to wheel (straight: 160.4)
 
         # assembly
-        branch_d=-1,
+        branch_d=+1,
         branch_f=-1,
     )

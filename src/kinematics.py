@@ -20,9 +20,87 @@ functions and square roots via the circle-intersection formula.
 """
 
 import numpy as np
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Tuple
 from .mechanism import MechanismParams
 from .geometry import rot, rotate_vec, circle_intersection
+
+
+def _compute_single_branch(
+    P1: np.ndarray, P2: np.ndarray, P3: np.ndarray,
+    P4: np.ndarray, params: MechanismParams,
+) -> Optional[Dict]:
+    """Complete the kinematics given a chosen P4 branch."""
+    v_d = P4 - P1
+    theta_d = np.arctan2(v_d[1], v_d[0])
+    P5 = P1 + rotate_vec(params._d5_local, theta_d)
+
+    p6_left, p6_right = circle_intersection(P2, params.L_P2P6, P5, params.L_e)
+    if p6_left is None:
+        return None
+
+    results = {}
+    for branch_f, P6 in [(-1, p6_left), (+1, p6_right)]:
+        if np.allclose(p6_left, p6_right) and branch_f == +1:
+            continue  # avoid duplicate tangent solution
+        v_f = P6 - P2
+        theta_f = np.arctan2(v_f[1], v_f[0])
+        P7 = P2 + rotate_vec(params._f7_local, theta_f)
+        results[branch_f] = {
+            'O': np.zeros(2),
+            'P1': P1, 'P2': P2, 'P3': P3,
+            'P4': P4, 'P5': P5, 'P6': P6, 'P7': P7,
+            'theta_d': theta_d, 'theta_f': theta_f,
+            'valid': True,
+            'branch_d': -1 if np.allclose(P4, p6_left) else +1,  # placeholder, fixed below
+        }
+    return results
+
+
+def solve_all_branches(
+    theta_a: float,
+    theta_b: float,
+    params: MechanismParams,
+) -> Dict[Tuple[int, int], Optional[Dict]]:
+    """
+    Return all valid assembly modes for the given motor angles.
+
+    The mechanism has up to 4 assembly modes, from the combination of:
+      - branch_d: ±1 (two circle-intersection solutions for P4)
+      - branch_f: ±1 (two circle-intersection solutions for P6)
+
+    Returns
+    -------
+    dict mapping (branch_d, branch_f) → result dict or None.
+        branch_d: -1 for left circle-intersection, +1 for right.
+        branch_f: -1 for left circle-intersection, +1 for right.
+    """
+    O = np.zeros(2)
+
+    P1 = rotate_vec(np.array([params.L_OP1, 0.0]), theta_a)
+    P2 = rotate_vec(params._a2_local, theta_a)
+    P3 = params.L_b * np.array([np.cos(theta_b), np.sin(theta_b)])
+
+    p4_left, p4_right = circle_intersection(P1, params.L_P1P4, P3, params.L_c)
+
+    all_results: Dict[Tuple[int, int], Optional[Dict]] = {
+        (-1, -1): None, (-1, +1): None, (+1, -1): None, (+1, +1): None,
+    }
+
+    if p4_left is None:
+        return all_results
+
+    for branch_d, P4 in [(-1, p4_left), (+1, p4_right)]:
+        if branch_d == +1 and np.allclose(p4_left, p4_right):
+            continue  # tangent case, skip duplicate
+        branch_results = _compute_single_branch(P1, P2, P3, P4, params)
+        if branch_results is None:
+            continue
+        for branch_f, res in branch_results.items():
+            res['branch_d'] = branch_d
+            res['branch_f'] = branch_f
+            all_results[(branch_d, branch_f)] = res
+
+    return all_results
 
 
 def solve_linkage(
