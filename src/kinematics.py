@@ -291,3 +291,72 @@ def solve_workspace(
         'n_valid': n_valid,
         'n_total': n_total,
     }
+
+
+def solve_inverse(
+    P7_target: np.ndarray,
+    params: MechanismParams,
+    elbow: int = 1,
+) -> List[Dict]:
+    """
+    Inverse kinematics: given end-effector position, find motor angles.
+
+    For the convex parallelogram configuration, the mechanism simplifies
+    to an equivalent 2R planar arm:
+        P7 = L1 * [cos(theta_a), sin(theta_a)] + L2 * [cos(theta_b), sin(theta_b)]
+    where L1 = |O-P2|, L2 = |P2-P7| (wheel).
+
+    Standard 2-link manipulator IK with up to 2 solutions.
+
+    Parameters
+    ----------
+    P7_target : (2,) array, desired end-effector position [mm].
+    params : MechanismParams
+    elbow : int, +1 for elbow-up, -1 for elbow-down, 0 for both.
+
+    Returns
+    -------
+    list of dicts with 'theta_a', 'theta_b' [rad], 'elbow', 'valid'.
+    Empty list if target is unreachable.
+    """
+    L1 = params.L_OP2   # |O-P2|
+    L2 = params.L_P2P7  # |P2-P7|
+
+    x, y = P7_target[0], P7_target[1]
+    r = np.hypot(x, y)
+
+    if r < 1e-10:
+        return []
+    if r > L1 + L2 + 1e-6 or r < abs(L1 - L2) - 1e-6:
+        return []
+
+    cos_alpha = (r ** 2 + L1 ** 2 - L2 ** 2) / (2.0 * L1 * r)
+    cos_alpha = np.clip(cos_alpha, -1.0, 1.0)
+    alpha = np.arccos(cos_alpha)
+    phi = np.arctan2(y, x)
+
+    signs = [elbow] if elbow != 0 else [-1, +1]
+    solutions = []
+    for sgn in signs:
+        theta_a = phi + sgn * alpha
+        theta_a = (theta_a + np.pi) % (2 * np.pi) - np.pi
+
+        theta_b = np.arctan2(
+            y - L1 * np.sin(theta_a),
+            x - L1 * np.cos(theta_a),
+        )
+
+        P7_check = np.array([
+            L1 * np.cos(theta_a) + L2 * np.cos(theta_b),
+            L1 * np.sin(theta_a) + L2 * np.sin(theta_b),
+        ])
+
+        solutions.append({
+            'theta_a': theta_a,
+            'theta_b': theta_b,
+            'elbow': sgn,
+            'valid': np.allclose(P7_check, P7_target, atol=1e-6),
+            'P7_check': P7_check,
+        })
+
+    return solutions

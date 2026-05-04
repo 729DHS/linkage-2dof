@@ -9,6 +9,7 @@ Usage:
     python main.py trajectory   # Trajectory following
     python main.py branches     # Show all 4 assembly modes
     python main.py interactive  # Interactive sliders for both angles
+    python main.py ik           # Inverse kinematics demo
 """
 
 import sys
@@ -16,7 +17,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from src.mechanism import MechanismParams, default_params
-from src.kinematics import solve_linkage, solve_all_branches, solve_trajectory, solve_workspace
+from src.kinematics import (
+    solve_linkage, solve_all_branches, solve_trajectory, solve_workspace,
+    solve_inverse,
+)
 from src.visualization import (
     plot_mechanism, plot_workspace, plot_trajectory,
     plot_all_branches, animate_mechanism, interactive_sliders,
@@ -165,6 +169,62 @@ def demo_trajectory(params: MechanismParams):
     plt.show()
 
 
+def demo_ik(params: MechanismParams):
+    """Inverse kinematics demo: given P7, find theta_a, theta_b."""
+    targets = [
+        np.array([107.4, 128.0]),
+        np.array([150.0, 100.0]),
+        np.array([50.0, -150.0]),
+        np.array([200.0, -50.0]),
+    ]
+
+    L1 = params.L_OP2; L2 = params.L_P2P7
+    print(f"=== Inverse Kinematics Demo ===")
+    print(f"L1 = {L1}, L2 = {L2}")
+    print(f"Workspace: r in [{abs(L1-L2):.1f}, {L1+L2:.1f}] mm\n")
+
+    n_rows = len(targets)
+    n_cols = 2  # elbow-up + elbow-down
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(12, 4 * n_rows))
+
+    for i, P7 in enumerate(targets):
+        r = np.linalg.norm(P7)
+        print(f"P7=({P7[0]:.0f}, {P7[1]:.0f}) r={r:.1f}")
+        sols = solve_inverse(P7, params, elbow=0)
+
+        if not sols:
+            print("  UNREACHABLE")
+            for j in range(n_cols):
+                axes[i, j].text(0, 0, "UNREACHABLE", ha='center')
+                axes[i, j].set_title(f"P7=({P7[0]:.0f},{P7[1]:.0f})")
+        else:
+            for j, sol in enumerate(sols):
+                ax = axes[i, j] if n_rows > 1 else axes[j]
+                res = solve_linkage(sol['theta_a'], sol['theta_b'], params)
+                if res:
+                    plot_mechanism(res, params, ax=ax, show_labels=False, title="")
+                    ax.set_title(
+                        rf"P7=({P7[0]:.0f},{P7[1]:.0f}) "
+                        rf"elbow={sol['elbow']:+d}: "
+                        rf"$\theta_a={np.rad2deg(sol['theta_a']):.1f}^\circ$, "
+                        rf"$\theta_b={np.rad2deg(sol['theta_b']):.1f}^\circ$",
+                        fontsize=9,
+                    )
+                print(f"  elbow={sol['elbow']:+d}: "
+                      f"a={np.rad2deg(sol['theta_a']):.1f} deg, "
+                      f"b={np.rad2deg(sol['theta_b']):.1f} deg")
+            # Hide empty column if only one solution
+            if len(sols) < n_cols:
+                for j in range(len(sols), n_cols):
+                    axes[i, j].set_visible(False)
+        print()
+
+    fig.suptitle("Inverse Kinematics: Elbow-Up vs Elbow-Down",
+                 fontsize=14, fontweight='bold')
+    plt.tight_layout()
+    plt.show()
+
+
 def main():
     params = default_params()
 
@@ -174,6 +234,7 @@ def main():
         'trajectory': demo_trajectory,
         'branches': demo_branches,
         'interactive': lambda p: interactive_sliders(p),
+        'ik': demo_ik,
     }
 
     if len(sys.argv) > 1:
