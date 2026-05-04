@@ -428,7 +428,7 @@ def interactive_sliders(params: MechanismParams):
     so the leg extends downward.
     """
     from matplotlib.widgets import Slider, RadioButtons
-    from src.kinematics import solve_all_branches
+    from .kinematics import solve_all_branches
 
     # View rotation: -90 deg clockwise so leg points downward
     # (x, y) -> (y, -x)

@@ -65,13 +65,13 @@ uv sync
 
 | Command | Description |
 |---------|-------------|
-| `python main.py` | Single configuration (convex, default branch) |
-| `python main.py interactive` | Interactive sliders (drag θa, θb) |
-| `python main.py branches` | All 4 assembly modes side-by-side |
-| `python main.py anim` | Animation → `animation.gif` |
-| `python main.py workspace` | Workspace analysis |
-| `python main.py trajectory` | Trajectory tracking |
-| `python main.py ik` | Inverse kinematics demo |
+| `python -m src.main` | Single configuration (convex, default branch) |
+| `python -m src.main interactive` | Interactive sliders (drag θa, θb) |
+| `python -m src.main branches` | All 4 assembly modes side-by-side |
+| `python -m src.main anim` | Animation → `pic/animation.gif` |
+| `python -m src.main workspace` | Workspace analysis |
+| `python -m src.main trajectory` | Trajectory tracking |
+| `python -m src.main ik` | Inverse kinematics demo |
 
 **Default branch**: `branch_d=+1, branch_f=-1` (convex parallelogram).
 
@@ -85,10 +85,14 @@ Python ≥ 3.12, numpy, matplotlib, scipy, PyQt6
 
 ```
 src/
+  main.py          # CLI/demo entry: python -m src.main
+  zero_calib.py    # Zero calibration plot: python -m src.zero_calib
   geometry.py      # 2D vector math, circle intersection
   mechanism.py     # Bar length parameters
   kinematics.py    # FK / IK / all-branch solver
   visualization.py # Plots, animation, interactive sliders
+pic/
+  .gitkeep         # Generated images/animations are written here and ignored
 docs/
   USAGE.md                 # Bilingual manual
   mechanism.md             # Mechanism topology
@@ -140,13 +144,13 @@ uv sync
 
 | 命令 | 说明 |
 |------|------|
-| `python main.py` | 单帧演示 (凸四边形, 默认分支) |
-| `python main.py interactive` | 交互滑块 (拖动 θa, θb) |
-| `python main.py branches` | 并排显示全部 4 种装配模式 |
-| `python main.py anim` | 动画 → `animation.gif` |
-| `python main.py workspace` | 工作空间分析 |
-| `python main.py trajectory` | 轨迹跟踪 |
-| `python main.py ik` | 逆运动学演示 |
+| `python -m src.main` | 单帧演示 (凸四边形, 默认分支) |
+| `python -m src.main interactive` | 交互滑块 (拖动 θa, θb) |
+| `python -m src.main branches` | 并排显示全部 4 种装配模式 |
+| `python -m src.main anim` | 动画 → `pic/animation.gif` |
+| `python -m src.main workspace` | 工作空间分析 |
+| `python -m src.main trajectory` | 轨迹跟踪 |
+| `python -m src.main ik` | 逆运动学演示 |
 
 **默认分支**: `branch_d=+1, branch_f=-1` (凸四边形).
 
@@ -160,10 +164,14 @@ Python ≥ 3.12, numpy, matplotlib, scipy, PyQt6
 
 ```
 src/
+  main.py          # 命令/演示入口: python -m src.main
+  zero_calib.py    # 零点校准图入口: python -m src.zero_calib
   geometry.py      # 2D 向量运算, 两圆相交
   mechanism.py     # 杆长参数定义
   kinematics.py    # 正逆运动学 + 全分支求解
   visualization.py # 绘图, 动画, 交互滑块
+pic/
+  .gitkeep         # 生成图片/动画统一输出到此目录并被忽略
 docs/
   USAGE.md                 # 中英双语使用手册
   mechanism.md             # 机构拓扑说明

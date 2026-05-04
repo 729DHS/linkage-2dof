@@ -34,21 +34,21 @@ uv sync
 ## 2. 快速开始 / Quick Start
 
 ```bash
-python main.py              # 单帧演示 / Single config demo
-python main.py interactive  # 交互滑块 / Interactive sliders
-python main.py branches     # 全部装配模式 / All 4 assembly modes
-python main.py anim         # 动画 / Animation
-python main.py workspace    # 工作空间 / Workspace
-python main.py trajectory   # 轨迹跟踪 / Trajectory
-python main.py ik           # 逆解演示 / Inverse kinematics
-python zero_calib.py        # 零点校准图 / Zero calibration plot
+python -m src.main              # 单帧演示 / Single config demo
+python -m src.main interactive  # 交互滑块 / Interactive sliders
+python -m src.main branches     # 全部装配模式 / All 4 assembly modes
+python -m src.main anim         # 动画 / Animation
+python -m src.main workspace    # 工作空间 / Workspace
+python -m src.main trajectory   # 轨迹跟踪 / Trajectory
+python -m src.main ik           # 逆解演示 / Inverse kinematics
+python -m src.zero_calib        # 零点校准图 / Zero calibration plot
 ```
 
 ---
 
 ## 3. 运行模式 / Run Modes
 
-### `python main.py` — 单帧 / Single Config
+### `python -m src.main` — 单帧 / Single Config
 
 显示机构在默认角度下的单帧静态图。
 
@@ -61,7 +61,7 @@ Shows mechanism at default angles (θa=0°, θb=90°, **凸四边形 / convex pa
 
 ---
 
-### `python main.py interactive` — 交互滑块 / Interactive Sliders
+### `python -m src.main interactive` — 交互滑块 / Interactive Sliders
 
 ![交互界面说明 / Interactive UI]
 
@@ -95,7 +95,7 @@ The default branch corresponds to the convex parallelogram O-P1-P4-P3.
 
 ---
 
-### `python main.py branches` — 全部装配模式 / All Branches
+### `python -m src.main branches` — 全部装配模式 / All Branches
 
 并排显示 4 种装配模式 (最多 4 = 2×2 分支组合)。
 
@@ -108,15 +108,15 @@ Shows all valid assembly modes (up to 4) side by side.
 
 ---
 
-### `python main.py anim` — 动画 / Animation
+### `python -m src.main anim` — 动画 / Animation
 
-生成机构运动动画，保存为 `animation.gif`。
+生成机构运动动画，保存为 `pic/animation.gif`。
 
-Generates mechanism motion animation, saved as `animation.gif`.
+Generates mechanism motion animation, saved as `pic/animation.gif`.
 
 ---
 
-### `python main.py workspace` — 工作空间 / Workspace
+### `python -m src.main workspace` — 工作空间 / Workspace
 
 采样电机角度空间，绘制末端可达区域。
 
@@ -128,7 +128,7 @@ Samples motor angle space, plots reachable workspace.
 
 ---
 
-### `python main.py trajectory` — 轨迹跟踪 / Trajectory
+### `python -m src.main trajectory` — 轨迹跟踪 / Trajectory
 
 沿一组正弦变化的电机角度轨迹求解，绘制末端路径。
 
@@ -140,7 +140,7 @@ Overlays mechanism snapshots at 4 points along the trajectory.
 
 ---
 
-### `python main.py ik` — 逆解演示 / Inverse Kinematics
+### `python -m src.main ik` — 逆解演示 / Inverse Kinematics
 
 给定 4 个目标 P7 位置，求解对应的电机转角。
 
@@ -152,11 +152,11 @@ Each target shows 2 solutions (elbow-up / elbow-down).
 
 ---
 
-### `python zero_calib.py` — 零点校准图 / Zero Calibration Plot
+### `python -m src.zero_calib` — 零点校准图 / Zero Calibration Plot
 
-根据当前零点角度生成 `zero_calib.png`，用于检查轮腿关节初始零点和车体坐标系关系。
+根据当前零点角度生成 `pic/zero_calib.png`，用于检查轮腿关节初始零点和车体坐标系关系。
 
-Generates `zero_calib.png` from the current zero-position angles to check the
+Generates `pic/zero_calib.png` from the current zero-position angles to check the
 initial joint zero offsets and the cart-frame relationship.
 
 当前参数 / Current constants:

@@ -3,28 +3,32 @@
 2-DOF Wheel-Legged Robot Linkage Mechanism Simulation.
 
 Usage:
-    python main.py              # Single configuration demo
-    python main.py anim         # Animation
-    python main.py workspace    # Workspace analysis
-    python main.py trajectory   # Trajectory following
-    python main.py branches     # Show all 4 assembly modes
-    python main.py interactive  # Interactive sliders for both angles
-    python main.py ik           # Inverse kinematics demo
+    python -m src.main              # Single configuration demo
+    python -m src.main anim         # Animation
+    python -m src.main workspace    # Workspace analysis
+    python -m src.main trajectory   # Trajectory following
+    python -m src.main branches     # Show all 4 assembly modes
+    python -m src.main interactive  # Interactive sliders for both angles
+    python -m src.main ik           # Inverse kinematics demo
 """
 
 import sys
+from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src.mechanism import MechanismParams, default_params
-from src.kinematics import (
+from .mechanism import MechanismParams, default_params
+from .kinematics import (
     solve_linkage, solve_all_branches, solve_trajectory, solve_workspace,
     solve_inverse,
 )
-from src.visualization import (
+from .visualization import (
     plot_mechanism, plot_workspace, plot_trajectory,
     plot_all_branches, animate_mechanism, interactive_sliders,
 )
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PIC_DIR = PROJECT_ROOT / "pic"
 
 
 def demo_single(params: MechanismParams):
@@ -104,11 +108,14 @@ def demo_animation(params: MechanismParams):
         print("No valid frames to animate.")
         return
 
+    PIC_DIR.mkdir(exist_ok=True)
+    save_path = PIC_DIR / "animation.gif"
+
     print("Creating animation...")
     anim = animate_mechanism(
         results, params, theta_a_seq, theta_b_seq,
         interval=50, title="Linkage Mechanism Animation",
-        save_path="animation.gif",
+        save_path=str(save_path),
     )
     plt.show()
 

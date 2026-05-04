@@ -7,9 +7,14 @@ import matplotlib
 matplotlib.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
+from pathlib import Path
 from matplotlib.patches import Circle, Rectangle
-from src.mechanism import default_params
-from src.kinematics import solve_linkage
+from .mechanism import default_params
+from .kinematics import solve_linkage
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PIC_DIR = PROJECT_ROOT / "pic"
+OUTPUT_PATH = PIC_DIR / "zero_calib.png"
 
 theta_a = np.deg2rad(-72.4)
 theta_b = np.deg2rad(80.0)
@@ -109,9 +114,10 @@ ax_r.set_xlabel('X [mm] (forward)')
 ax_r.set_ylabel('Y [mm] ($\\uparrow$ up)')
 ax_r.set_aspect('equal'); ax_r.grid(True, alpha=0.3)
 
+PIC_DIR.mkdir(exist_ok=True)
 plt.tight_layout()
-plt.savefig('/home/huiming/桌面/sim/linkage/v1/zero_calib.png', dpi=150, bbox_inches='tight')
-print('Saved: zero_calib.png')
+plt.savefig(OUTPUT_PATH, dpi=150, bbox_inches='tight')
+print(f'Saved: {OUTPUT_PATH}')
 print(f'theta_a = {np.rad2deg(theta_a):.1f} deg')
 print(f'theta_b = {np.rad2deg(theta_b):.1f} deg')
 print(f'phi     = {np.rad2deg(phi):.1f} deg')

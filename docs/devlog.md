@@ -15,7 +15,7 @@
 
 ### 背景
 
-新增 `zero_calib.py`，用于可视化轮腿关节初始零点角度，以及机构与小车整体坐标系的关系。
+新增 `src/zero_calib.py`，用于可视化轮腿关节初始零点角度，以及机构与小车整体坐标系的关系。
 
 ### 修复内容
 
@@ -23,7 +23,13 @@
 - P7 作为轮心，轮子绘制在车体下方并与地面相切。
 - 右图姿态使用 `phi + 180°`，修正原先整体反转 180° 的显示问题。
 - 轮子半径设置为 30 mm。
-- 输出 `zero_calib.png`，同时打印 θa、θb、φ、绘图角度、轮半径、O_motor 和 P7_wheel hub 坐标。
+- 输出 `pic/zero_calib.png`，同时打印 θa、θb、φ、绘图角度、轮半径、O_motor 和 P7_wheel hub 坐标。
+
+### 目录维护
+
+- 运行入口统一放在 `src/` 中，通过 `python -m src.main` 或 `python -m src.zero_calib` 执行。
+- 生成图片和动画统一输出到 `pic/`。
+- `v1` 根目录只保留项目级文件和文档入口，避免脚本、图片散落。
 
 ### 当前零点参数
 
@@ -113,7 +119,7 @@
 - 默认改为 branch_d=+1 (在 θ_a=0°, θ_b=90° 时对应凸四边形)
 - 添加 `solve_all_branches()` 函数, 一次输出全部 4 种装配模式
 - 添加 `plot_all_branches()` 可视化, 并排显示所有有效解
-- 用 `python main.py branches` 查看所有解
+- 用 `python -m src.main branches` 查看所有解
 
 **注意**: convex/crossed 对应的 branch 不是固定的, 随角度变化。
 轨迹跟踪用 continuity tracking (prev_theta_d) 保持一致性。
