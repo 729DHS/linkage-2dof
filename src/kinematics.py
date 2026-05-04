@@ -202,6 +202,8 @@ def solve_linkage(
         'P4': P4, 'P5': P5, 'P6': P6, 'P7': P7,
         'theta_d': theta_d, 'theta_f': theta_f,
         'valid': True,
+        'branch_d': params.branch_d,
+        'branch_f': params.branch_f,
     }
 
 
