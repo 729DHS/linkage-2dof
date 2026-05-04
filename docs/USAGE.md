@@ -41,6 +41,7 @@ python main.py anim         # 动画 / Animation
 python main.py workspace    # 工作空间 / Workspace
 python main.py trajectory   # 轨迹跟踪 / Trajectory
 python main.py ik           # 逆解演示 / Inverse kinematics
+python zero_calib.py        # 零点校准图 / Zero calibration plot
 ```
 
 ---
@@ -148,6 +149,27 @@ Given 4 target P7 positions, finds motor angles.
 每个目标显示 2 个解 (肘向上 / 肘向下)。
 
 Each target shows 2 solutions (elbow-up / elbow-down).
+
+---
+
+### `python zero_calib.py` — 零点校准图 / Zero Calibration Plot
+
+根据当前零点角度生成 `zero_calib.png`，用于检查轮腿关节初始零点和车体坐标系关系。
+
+Generates `zero_calib.png` from the current zero-position angles to check the
+initial joint zero offsets and the cart-frame relationship.
+
+当前参数 / Current constants:
+- θa = -72.4°
+- θb = 80.0°
+- φ = 13.9°
+- 轮子半径 / wheel radius = 30 mm
+
+右图约定 / Right-plot convention:
+- 车体为水平长方形 / cart body is a horizontal rectangle
+- P7 为轮心 / P7 is the wheel hub
+- 轮子在车体下方并接触地面 / wheel is under the cart body and touches ground
+- 绘图姿态使用 `φ + 180°`，匹配小车实际方向 / drawing pose uses `φ + 180°`
 
 ---
 
