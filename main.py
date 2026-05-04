@@ -8,6 +8,7 @@ Usage:
     python main.py workspace    # Workspace analysis
     python main.py trajectory   # Trajectory following
     python main.py branches     # Show all 4 assembly modes
+    python main.py interactive  # Interactive sliders for both angles
 """
 
 import sys
@@ -18,7 +19,7 @@ from src.mechanism import MechanismParams, default_params
 from src.kinematics import solve_linkage, solve_all_branches, solve_trajectory, solve_workspace
 from src.visualization import (
     plot_mechanism, plot_workspace, plot_trajectory,
-    plot_all_branches, animate_mechanism,
+    plot_all_branches, animate_mechanism, interactive_sliders,
 )
 
 
@@ -172,6 +173,7 @@ def main():
         'workspace': demo_workspace,
         'trajectory': demo_trajectory,
         'branches': demo_branches,
+        'interactive': lambda p: interactive_sliders(p),
     }
 
     if len(sys.argv) > 1:

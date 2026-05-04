@@ -417,3 +417,154 @@ def animate_mechanism(
         print(f"Animation saved to {save_path}")
 
     return anim
+
+
+def interactive_sliders(params: MechanismParams):
+    """
+    Interactive exploration with sliders for theta_a and theta_b.
+
+    Uses matplotlib Slider widgets. Drag the sliders to change motor angles
+    and see the mechanism update in real time.
+    """
+    from matplotlib.widgets import Slider, RadioButtons
+    from src.kinematics import solve_all_branches
+
+    # Initial angles
+    ta0 = 0.0
+    tb0 = np.deg2rad(90)
+
+    # Solve all branches for initial state
+    all_res = solve_all_branches(ta0, tb0, params)
+
+    fig = plt.figure(figsize=(12, 10))
+
+    # Main mechanism plot
+    ax_mech = fig.add_axes([0.05, 0.25, 0.75, 0.72])
+    ax_mech.set_aspect('equal')
+
+    # Slider axes
+    ax_slider_a = fig.add_axes([0.12, 0.12, 0.60, 0.03])
+    ax_slider_b = fig.add_axes([0.12, 0.06, 0.60, 0.03])
+
+    # Branch selector (radio buttons)
+    ax_radio = fig.add_axes([0.82, 0.06, 0.15, 0.12])
+
+    slider_a = Slider(ax_slider_a, r'$\theta_a$ [deg]', -180, 180, valinit=0)
+    slider_b = Slider(ax_slider_b, r'$\theta_b$ [deg]', -180, 180, valinit=90)
+
+    # Build radio labels
+    branch_keys = []
+    branch_labels = []
+    for (bd, bf), res in sorted(all_res.items()):
+        if res is not None:
+            label = f"d={bd:+d}, f={bf:+d}"
+            branch_keys.append((bd, bf))
+            branch_labels.append(label)
+
+    active_branch = branch_keys[0] if branch_keys else (-1, -1)
+
+    # Try to default to the convex branch
+    for (bd, bf), res in all_res.items():
+        if res is not None:
+            P1 = res['P1']; P3 = res['P3']; P4 = res['P4']
+            if np.linalg.norm(P4 - (P1 + P3)) < 30:
+                active_branch = (bd, bf)
+                break
+
+    # Mutable state for closures
+    state = {
+        'branch_keys': branch_keys,
+        'branch_labels': branch_labels,
+        'active_branch': active_branch,
+        'radio': None,
+    }
+
+    active_idx = state['branch_keys'].index(state['active_branch']) \
+        if state['active_branch'] in state['branch_keys'] else 0
+    state['radio'] = RadioButtons(
+        ax_radio, state['branch_labels'], active=active_idx)
+
+    def update(val=None):
+        ta = np.deg2rad(slider_a.val)
+        tb = np.deg2rad(slider_b.val)
+
+        all_res = solve_all_branches(ta, tb, params)
+
+        new_keys = []
+        new_labels = []
+        for (bd, bf), res in sorted(all_res.items()):
+            if res is not None:
+                new_keys.append((bd, bf))
+                new_labels.append(f"d={bd:+d}, f={bf:+d}")
+
+        state['branch_keys'] = new_keys
+        state['branch_labels'] = new_labels
+
+        # Keep current branch if still valid, else try convex, else first
+        if state['active_branch'] not in state['branch_keys']:
+            picked = False
+            for (bd, bf), res in all_res.items():
+                if res is not None:
+                    P1 = res['P1']; P3 = res['P3']; P4 = res['P4']
+                    if np.linalg.norm(P4 - (P1 + P3)) < 30:
+                        state['active_branch'] = (bd, bf)
+                        picked = True
+                        break
+            if not picked and state['branch_keys']:
+                state['active_branch'] = state['branch_keys'][0]
+
+        # Rebuild radio with updated labels
+        ax_radio.clear()
+        if state['branch_keys']:
+            active_idx = state['branch_keys'].index(state['active_branch']) \
+                if state['active_branch'] in state['branch_keys'] else 0
+            state['radio'] = RadioButtons(
+                ax_radio, state['branch_labels'], active=active_idx)
+            state['radio'].on_clicked(branch_select)
+
+        # Plot
+        res = all_res.get(state['active_branch'])
+        ax_mech.clear()
+        ax_mech.set_aspect('equal')
+        ax_mech.grid(True, alpha=0.3)
+        ax_mech.axhline(y=0, color='gray', lw=0.5)
+        ax_mech.axvline(x=0, color='gray', lw=0.5)
+
+        if res is not None:
+            plot_mechanism(res, params, ax=ax_mech, show_labels=False, title="")
+
+            dist_to_convex = np.linalg.norm(
+                res['P4'] - (res['P1'] + res['P3']))
+            para_type = "convex" if dist_to_convex < 30 else "crossed"
+
+            ax_mech.set_title(
+                rf"$\theta_a={slider_a.val:.1f}°$  "
+                rf"$\theta_b={slider_b.val:.1f}°$  |  "
+                rf"branch_d={state['active_branch'][0]:+d}, "
+                rf"branch_f={state['active_branch'][1]:+d}  |  "
+                rf"O-P1-P4-P3: {para_type}  |  "
+                rf"P7=({res['P7'][0]:.0f}, {res['P7'][1]:.0f}) mm",
+                fontsize=11,
+            )
+        else:
+            ax_mech.text(0, 0, "No solution for this branch",
+                         ha='center', va='center', fontsize=14, color='red')
+            ax_mech.set_title(f"No valid config for "
+                              rf"$\theta_a={slider_a.val:.1f}°$, "
+                              rf"$\theta_b={slider_b.val:.1f}°$")
+
+        fig.canvas.draw_idle()
+
+    def branch_select(label):
+        idx = state['branch_labels'].index(label)
+        state['active_branch'] = state['branch_keys'][idx]
+        update()
+
+    slider_a.on_changed(update)
+    slider_b.on_changed(update)
+    state['radio'].on_clicked(branch_select)
+
+    # Initial draw
+    update()
+
+    plt.show()
