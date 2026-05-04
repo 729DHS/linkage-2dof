@@ -423,11 +423,21 @@ def interactive_sliders(params: MechanismParams):
     """
     Interactive exploration with sliders for theta_a and theta_b.
 
-    Uses matplotlib Slider widgets. Drag the sliders to change motor angles
-    and see the mechanism update in real time.
+    Drag sliders to change motor angles; radio buttons to switch
+    assembly modes. View is fixed with motor at center, rotated 90 deg
+    so the leg extends downward.
     """
     from matplotlib.widgets import Slider, RadioButtons
     from src.kinematics import solve_all_branches
+
+    # View rotation: -90 deg clockwise so leg points downward
+    # (x, y) -> (y, -x)
+    def rotate_view(v):
+        return np.array([v[1], -v[0]])
+
+    # Fixed view bounds (mm), motor O at (0, 0) center
+    VIEW_XLIM = (-250, 250)
+    VIEW_YLIM = (-300, 100)
 
     # Initial angles
     ta0 = 0.0
@@ -436,11 +446,16 @@ def interactive_sliders(params: MechanismParams):
     # Solve all branches for initial state
     all_res = solve_all_branches(ta0, tb0, params)
 
-    fig = plt.figure(figsize=(12, 10))
+    fig = plt.figure(figsize=(11, 10))
 
     # Main mechanism plot
     ax_mech = fig.add_axes([0.05, 0.25, 0.75, 0.72])
     ax_mech.set_aspect('equal')
+    ax_mech.set_xlim(*VIEW_XLIM)
+    ax_mech.set_ylim(*VIEW_YLIM)
+    ax_mech.grid(True, alpha=0.3)
+    # Ground marker
+    ax_mech.axhline(y=VIEW_YLIM[0] + 20, color='brown', lw=4, alpha=0.5)
 
     # Slider axes
     ax_slider_a = fig.add_axes([0.12, 0.12, 0.60, 0.03])
@@ -526,12 +541,22 @@ def interactive_sliders(params: MechanismParams):
         res = all_res.get(state['active_branch'])
         ax_mech.clear()
         ax_mech.set_aspect('equal')
+        ax_mech.set_xlim(*VIEW_XLIM)
+        ax_mech.set_ylim(*VIEW_YLIM)
         ax_mech.grid(True, alpha=0.3)
-        ax_mech.axhline(y=0, color='gray', lw=0.5)
-        ax_mech.axvline(x=0, color='gray', lw=0.5)
+        ax_mech.axhline(y=VIEW_YLIM[0] + 20, color='brown', lw=4, alpha=0.5)
 
         if res is not None:
-            plot_mechanism(res, params, ax=ax_mech, show_labels=False, title="")
+            # Rotate all points by -90 deg for leg-down view
+            res_rotated = {}
+            for key in ['O', 'P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7']:
+                res_rotated[key] = rotate_view(res[key])
+            for key in ['theta_d', 'theta_f', 'valid', 'branch_d', 'branch_f']:
+                if key in res:
+                    res_rotated[key] = res[key]
+
+            plot_mechanism(res_rotated, params, ax=ax_mech,
+                          show_labels=False, title="")
 
             dist_to_convex = np.linalg.norm(
                 res['P4'] - (res['P1'] + res['P3']))
@@ -547,7 +572,7 @@ def interactive_sliders(params: MechanismParams):
                 fontsize=11,
             )
         else:
-            ax_mech.text(0, 0, "No solution for this branch",
+            ax_mech.text(0, -100, "No solution for this branch",
                          ha='center', va='center', fontsize=14, color='red')
             ax_mech.set_title(f"No valid config for "
                               rf"$\theta_a={slider_a.val:.1f}°$, "
