@@ -35,35 +35,40 @@ expression involving only trig functions and square roots.
 ## Quick Start
 
 ```bash
-# Install dependencies
-uv sync
-
-# Run
-python main.py              # Single configuration (convex parallelogram)
-python main.py interactive  # Interactive sliders (drag to explore)
+uv sync                      # Install dependencies
+python main.py               # Single config (convex parallelogram, default branch)
+python main.py interactive  # Interactive sliders (drag to explore angles)
 python main.py branches     # All 4 assembly modes side-by-side
 python main.py anim         # Animation
 python main.py workspace    # Workspace analysis
 python main.py trajectory   # Trajectory tracking
+python main.py ik           # Inverse kinematics demo
 ```
+
+**Default branch**: `branch_d=+1, branch_f=-1` (convex parallelogram).
+This is the physically correct assembly, corresponding to the
+analytical formula: P7 = L1·[cos θa, sin θa] + L2·[cos θb, sin θb].
+
+详见 / See [docs/USAGE.md](docs/USAGE.md) for full bilingual manual.
 
 ## Dependencies
 
 - Python >= 3.12
-- numpy, matplotlib, scipy
-- PyQt6 (for interactive GUI)
+- numpy, matplotlib, scipy, PyQt6
 
 ## Project Structure
 
 ```
 src/
   geometry.py      # 2D vector math, circle intersection, triangle solver
-  mechanism.py     # Mechanism parameters (lengths, triangle geometry)
-  kinematics.py    # Forward kinematics (solve_linkage, solve_all_branches)
+  mechanism.py     # Mechanism parameters (bar lengths, triangle geometry)
+  kinematics.py    # Forward/inverse kinematics + all-branch solver
   visualization.py # Plots, animation, interactive sliders
 docs/
-  mechanism.md     # Theory & derivation
-  devlog.md        # Development log
+  USAGE.md                 # Bilingual user manual (中/EN)
+  mechanism.md             # Mechanism topology & kinematics theory
+  analytical_solution.md   # Analytical FK/IK derivation
+  devlog.md                # Development log
 ```
 
 ## License
