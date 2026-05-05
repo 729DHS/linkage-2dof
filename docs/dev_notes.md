@@ -11,18 +11,25 @@ cd /home/huiming/桌面/sim/linkage/v1
 cd /home/huiming/桌面/sim/linkage/v1
 .venv/bin/python -m src.main
 .venv/bin/python -m src.main workspace
+.venv/bin/python -m src.main ik_interactive
 .venv/bin/python -m src.zero_calib
 ```
+
+常见报错:
+
+- `找不到命令 "python"`: Debian 默认没有 `python` 命令，用 `.venv/bin/python`。
+- `No module named src`: 当前目录不对，先 `cd /home/huiming/桌面/sim/linkage/v1`。
+- 图形窗口打不开: 确认是在桌面会话里运行，不要用纯 SSH/无显示环境。
 
 ## 目录结构和维护要求
 
 - `src/`: Python 源码和可单独运行的入口模块。
-- `src/main.py`: 常规仿真入口，使用 `python -m src.main [mode]` 运行。
-- `src/zero_calib.py`: 零点校准图入口，使用 `python -m src.zero_calib` 运行。
+- `src/main.py`: 常规仿真入口，使用 `.venv/bin/python -m src.main [mode]` 运行。
+- `src/zero_calib.py`: 零点校准图入口，使用 `.venv/bin/python -m src.zero_calib` 运行。
 - `docs/`: 使用说明、开发日志、机制说明、开发备忘。
 - `pic/`: 所有脚本生成的图片和动画输出目录。
 - 根目录只放项目级文件，如 `README.md`、`pyproject.toml`、`.gitignore`。
-- 新增脚本时优先放入 `src/`，并确认是否应作为 `python -m src.xxx` 的入口模块。
+- 新增脚本时优先放入 `src/`，并确认是否应作为 `.venv/bin/python -m src.xxx` 的入口模块。
 - 新增输出文件时统一写到 `pic/`，不要散落到 `v1` 根目录。
 - 修改运行命令、输出路径、目录结构时，同步维护 `README.md`、`docs/USAGE.md`、`docs/devlog.md` 和本文件。
 - 提交前检查 `git status --short --branch`，避免遗漏未跟踪源码或文档。
@@ -69,7 +76,7 @@ cd /home/huiming/桌面/sim/linkage/v1
 - 以 `P7` 作为轮心，统一机构末端、轮子圆心和标注坐标。
 - 车体使用 `Rectangle` 绘制水平长方形，轮子使用 `Circle` 绘制。
 - 轮子半径设为 30 mm，轮心固定在 `Y=30`，地面为 `Y=0`。
-- 脚本移动到 `src/zero_calib.py`，以 `python -m src.zero_calib` 运行。
+- 脚本移动到 `src/zero_calib.py`，以 `.venv/bin/python -m src.zero_calib` 运行。
 - 生成图片输出到 `pic/zero_calib.png`，避免污染 `v1` 根目录。
 
 ## Unit4 固件对接备忘

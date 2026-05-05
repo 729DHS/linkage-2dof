@@ -27,7 +27,7 @@
 
 ### 目录维护
 
-- 运行入口统一放在 `src/` 中，通过 `python -m src.main` 或 `python -m src.zero_calib` 执行。
+- 运行入口统一放在 `src/` 中，通过 `.venv/bin/python -m src.main` 或 `.venv/bin/python -m src.zero_calib` 执行。
 - 生成图片和动画统一输出到 `pic/`。
 - `v1` 根目录只保留项目级文件和文档入口，避免脚本、图片散落。
 
@@ -95,7 +95,7 @@ static const float cad_angle_at_zero[4] = {
 
 ### 问题
 
-`python -m src.main interactive` 拖动滑块时卡顿明显。
+`.venv/bin/python -m src.main interactive` 拖动滑块时卡顿明显。
 
 ### 原因
 
@@ -111,7 +111,21 @@ static const float cad_angle_at_zero[4] = {
 - 交互模式改为只显示默认物理分支 `branch_d=+1, branch_f=-1`。
 - 滑块按 1° 步进更新，减少刷新频率。
 - 移除交互模式里的动态分支 radio 重建。
-- 查看全部分支仍使用 `python -m src.main branches`。
+- 查看全部分支仍使用 `.venv/bin/python -m src.main branches`。
+
+---
+
+## 2026-05-05: 新增逆解拖拽界面
+
+### 功能
+
+新增 `.venv/bin/python -m src.main ik_interactive`。
+
+- 初始姿态与 `zero_calib` 一致: θa=-162.4°, θb=-10.0°。
+- 鼠标拖动 P7 外圈目标点，实时调用 `solve_inverse()`。
+- 界面显示 `theta_a`、`theta_b` 和目标末端坐标。
+- 两个逆解之间按“最接近上一帧角度”选择，避免拖动过程中突然跳到另一支解。
+- 超出工作空间时显示 `UNREACHABLE`。
 
 ---
 
@@ -192,7 +206,7 @@ static const float cad_angle_at_zero[4] = {
 - 默认改为 branch_d=+1 (在 θ_a=0°, θ_b=90° 时对应凸四边形)
 - 添加 `solve_all_branches()` 函数, 一次输出全部 4 种装配模式
 - 添加 `plot_all_branches()` 可视化, 并排显示所有有效解
-- 用 `python -m src.main branches` 查看所有解
+- 用 `.venv/bin/python -m src.main branches` 查看所有解
 
 **注意**: convex/crossed 对应的 branch 不是固定的, 随角度变化。
 轨迹跟踪用 continuity tracking (prev_theta_d) 保持一致性。

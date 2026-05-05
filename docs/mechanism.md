@@ -91,10 +91,10 @@ bar_a 为直刚体, 局部坐标:
 ## 5. 使用说明
 
 ```bash
-python -m src.main              # 单帧静态图
-python -m src.main anim         # 动画演示
-python -m src.main workspace    # 工作空间分析
-python -m src.main trajectory   # 轨迹跟踪演示
+.venv/bin/python -m src.main              # 单帧静态图
+.venv/bin/python -m src.main anim         # 动画演示
+.venv/bin/python -m src.main workspace    # 工作空间分析
+.venv/bin/python -m src.main trajectory   # 轨迹跟踪演示
 ```
 
 ## 6. 工作空间测试结果

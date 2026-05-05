@@ -3,13 +3,14 @@
 2-DOF Wheel-Legged Robot Linkage Mechanism Simulation.
 
 Usage:
-    python -m src.main              # Single configuration demo
-    python -m src.main anim         # Animation
-    python -m src.main workspace    # Workspace analysis
-    python -m src.main trajectory   # Trajectory following
-    python -m src.main branches     # Show all 4 assembly modes
-    python -m src.main interactive  # Interactive sliders for both angles
-    python -m src.main ik           # Inverse kinematics demo
+    .venv/bin/python -m src.main              # Single configuration demo
+    .venv/bin/python -m src.main anim         # Animation
+    .venv/bin/python -m src.main workspace    # Workspace analysis
+    .venv/bin/python -m src.main trajectory   # Trajectory following
+    .venv/bin/python -m src.main branches     # Show all 4 assembly modes
+    .venv/bin/python -m src.main interactive  # Interactive sliders for both angles
+    .venv/bin/python -m src.main ik_interactive # Drag P7 and solve inverse kinematics
+    .venv/bin/python -m src.main ik           # Inverse kinematics demo
 """
 
 import sys
@@ -25,6 +26,7 @@ from .kinematics import (
 from .visualization import (
     plot_mechanism, plot_workspace, plot_trajectory,
     plot_all_branches, animate_mechanism, interactive_sliders,
+    interactive_inverse,
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -241,6 +243,7 @@ def main():
         'trajectory': demo_trajectory,
         'branches': demo_branches,
         'interactive': lambda p: interactive_sliders(p),
+        'ik_interactive': lambda p: interactive_inverse(p),
         'ik': demo_ik,
     }
 

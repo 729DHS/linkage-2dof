@@ -33,22 +33,36 @@ uv sync
 
 ## 2. 快速开始 / Quick Start
 
+以下命令需要在 `v1` 目录执行。Debian 默认可能没有 `python` 命令，所以统一使用 `.venv/bin/python`。
+
+Run the following commands from the `v1` directory. Debian may not provide a
+`python` command, so this project uses `.venv/bin/python` explicitly.
+
+如果你已经在 `/home/huiming/桌面/sim/linkage`，先执行:
+
 ```bash
-python -m src.main              # 单帧演示 / Single config demo
-python -m src.main interactive  # 交互滑块 / Interactive sliders
-python -m src.main branches     # 全部装配模式 / All 4 assembly modes
-python -m src.main anim         # 动画 / Animation
-python -m src.main workspace    # 工作空间 / Workspace
-python -m src.main trajectory   # 轨迹跟踪 / Trajectory
-python -m src.main ik           # 逆解演示 / Inverse kinematics
-python -m src.zero_calib        # 零点校准图 / Zero calibration plot
+cd v1
+```
+
+如果你看到 `找不到命令 “python”`，不要使用 `python -m ...`，改用下面表里的 `.venv/bin/python -m ...`。
+
+```bash
+.venv/bin/python -m src.main              # 单帧演示 / Single config demo
+.venv/bin/python -m src.main interactive  # 交互滑块 / Interactive sliders
+.venv/bin/python -m src.main branches     # 全部装配模式 / All 4 assembly modes
+.venv/bin/python -m src.main anim         # 动画 / Animation
+.venv/bin/python -m src.main workspace    # 工作空间 / Workspace
+.venv/bin/python -m src.main trajectory   # 轨迹跟踪 / Trajectory
+.venv/bin/python -m src.main ik_interactive # 拖动 P7 逆解 / Drag P7 IK
+.venv/bin/python -m src.main ik           # 逆解演示 / Inverse kinematics
+.venv/bin/python -m src.zero_calib        # 零点校准图 / Zero calibration plot
 ```
 
 ---
 
 ## 3. 运行模式 / Run Modes
 
-### `python -m src.main` — 单帧 / Single Config
+### `.venv/bin/python -m src.main` — 单帧 / Single Config
 
 显示机构在默认角度下的单帧静态图。
 
@@ -61,7 +75,7 @@ Shows mechanism at default angles (θa=0°, θb=90°, **凸四边形 / convex pa
 
 ---
 
-### `python -m src.main interactive` — 交互滑块 / Interactive Sliders
+### `.venv/bin/python -m src.main interactive` — 交互滑块 / Interactive Sliders
 
 ![交互界面说明 / Interactive UI]
 
@@ -70,11 +84,11 @@ Shows mechanism at default angles (θa=0°, θb=90°, **凸四边形 / convex pa
 Opens an interactive window with dragable sliders.
 
 交互模式为了保持拖动顺滑，只显示默认物理分支 (branch_d=+1, branch_f=-1)，滑块按 1° 步进更新。
-如需查看全部装配模式，请使用 `python -m src.main branches`。
+如需查看全部装配模式，请使用 `.venv/bin/python -m src.main branches`。
 
 For smoother dragging, interactive mode shows only the default physical branch
 (branch_d=+1, branch_f=-1) and updates sliders in 1° steps. Use
-`python -m src.main branches` to inspect all assembly modes.
+`.venv/bin/python -m src.main branches` to inspect all assembly modes.
 
 #### 界面说明 / UI Elements
 
@@ -100,7 +114,7 @@ The default branch corresponds to the convex parallelogram O-P1-P4-P3.
 
 ---
 
-### `python -m src.main branches` — 全部装配模式 / All Branches
+### `.venv/bin/python -m src.main branches` — 全部装配模式 / All Branches
 
 并排显示 4 种装配模式 (最多 4 = 2×2 分支组合)。
 
@@ -113,7 +127,7 @@ Shows all valid assembly modes (up to 4) side by side.
 
 ---
 
-### `python -m src.main anim` — 动画 / Animation
+### `.venv/bin/python -m src.main anim` — 动画 / Animation
 
 生成机构运动动画，保存为 `pic/animation.gif`。
 
@@ -121,7 +135,7 @@ Generates mechanism motion animation, saved as `pic/animation.gif`.
 
 ---
 
-### `python -m src.main workspace` — 工作空间 / Workspace
+### `.venv/bin/python -m src.main workspace` — 工作空间 / Workspace
 
 采样电机角度空间，绘制末端可达区域。
 
@@ -133,7 +147,7 @@ Samples motor angle space, plots reachable workspace.
 
 ---
 
-### `python -m src.main trajectory` — 轨迹跟踪 / Trajectory
+### `.venv/bin/python -m src.main trajectory` — 轨迹跟踪 / Trajectory
 
 沿一组正弦变化的电机角度轨迹求解，绘制末端路径。
 
@@ -145,7 +159,7 @@ Overlays mechanism snapshots at 4 points along the trajectory.
 
 ---
 
-### `python -m src.main ik` — 逆解演示 / Inverse Kinematics
+### `.venv/bin/python -m src.main ik` — 逆解演示 / Inverse Kinematics
 
 给定 4 个目标 P7 位置，求解对应的电机转角。
 
@@ -157,7 +171,20 @@ Each target shows 2 solutions (elbow-up / elbow-down).
 
 ---
 
-### `python -m src.zero_calib` — 零点校准图 / Zero Calibration Plot
+### `.venv/bin/python -m src.main ik_interactive` — 逆解拖拽 / Interactive IK
+
+打开逆解交互窗口。拖动 P7 外圈目标点，界面会实时计算并显示 `theta_a`、`theta_b` 和目标末端坐标。
+
+Opens an inverse-kinematics interaction window. Drag the P7 target ring to solve
+and display `theta_a`, `theta_b`, and the target end-effector position.
+
+- 初始姿态与 `zero_calib` 一致: θa=-162.4°, θb=-10.0°
+- 拖动时优先选择最接近上一帧的逆解，避免两解突然跳变
+- 超出工作空间时显示 `UNREACHABLE`
+
+---
+
+### `.venv/bin/python -m src.zero_calib` — 零点校准图 / Zero Calibration Plot
 
 根据当前零点角度生成 `pic/zero_calib.png`，用于检查轮腿关节初始零点和车体坐标系关系。
 

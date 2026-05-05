@@ -63,15 +63,26 @@ cd linkage-2dof/v1
 uv sync
 ```
 
+Run commands from the `v1` directory. Debian may not provide a `python`
+command, so examples use `.venv/bin/python`.
+
+If you are at `/home/huiming/桌面/sim/linkage`, run:
+
+```bash
+cd v1
+.venv/bin/python -m src.main ik_interactive
+```
+
 | Command | Description |
 |---------|-------------|
-| `python -m src.main` | Single configuration (convex, default branch) |
-| `python -m src.main interactive` | Interactive sliders (drag θa, θb) |
-| `python -m src.main branches` | All 4 assembly modes side-by-side |
-| `python -m src.main anim` | Animation → `pic/animation.gif` |
-| `python -m src.main workspace` | Workspace analysis |
-| `python -m src.main trajectory` | Trajectory tracking |
-| `python -m src.main ik` | Inverse kinematics demo |
+| `.venv/bin/python -m src.main` | Single configuration (convex, default branch) |
+| `.venv/bin/python -m src.main interactive` | Interactive sliders (drag θa, θb) |
+| `.venv/bin/python -m src.main branches` | All 4 assembly modes side-by-side |
+| `.venv/bin/python -m src.main anim` | Animation → `pic/animation.gif` |
+| `.venv/bin/python -m src.main workspace` | Workspace analysis |
+| `.venv/bin/python -m src.main trajectory` | Trajectory tracking |
+| `.venv/bin/python -m src.main ik_interactive` | Drag P7 target and solve IK |
+| `.venv/bin/python -m src.main ik` | Inverse kinematics demo |
 
 **Default branch**: `branch_d=+1, branch_f=-1` (convex parallelogram).
 
@@ -85,8 +96,8 @@ Python ≥ 3.12, numpy, matplotlib, scipy, PyQt6
 
 ```
 src/
-  main.py          # CLI/demo entry: python -m src.main
-  zero_calib.py    # Zero calibration plot: python -m src.zero_calib
+  main.py          # CLI/demo entry: .venv/bin/python -m src.main
+  zero_calib.py    # Zero calibration plot: .venv/bin/python -m src.zero_calib
   geometry.py      # 2D vector math, circle intersection
   mechanism.py     # Bar length parameters
   kinematics.py    # FK / IK / all-branch solver
@@ -142,15 +153,25 @@ cd linkage-2dof/v1
 uv sync
 ```
 
+下面命令需要在 `v1` 目录执行。Debian 默认可能没有 `python` 命令，所以统一使用 `.venv/bin/python`。
+
+如果你当前在 `/home/huiming/桌面/sim/linkage`，直接运行:
+
+```bash
+cd v1
+.venv/bin/python -m src.main ik_interactive
+```
+
 | 命令 | 说明 |
 |------|------|
-| `python -m src.main` | 单帧演示 (凸四边形, 默认分支) |
-| `python -m src.main interactive` | 交互滑块 (拖动 θa, θb) |
-| `python -m src.main branches` | 并排显示全部 4 种装配模式 |
-| `python -m src.main anim` | 动画 → `pic/animation.gif` |
-| `python -m src.main workspace` | 工作空间分析 |
-| `python -m src.main trajectory` | 轨迹跟踪 |
-| `python -m src.main ik` | 逆运动学演示 |
+| `.venv/bin/python -m src.main` | 单帧演示 (凸四边形, 默认分支) |
+| `.venv/bin/python -m src.main interactive` | 交互滑块 (拖动 θa, θb) |
+| `.venv/bin/python -m src.main branches` | 并排显示全部 4 种装配模式 |
+| `.venv/bin/python -m src.main anim` | 动画 → `pic/animation.gif` |
+| `.venv/bin/python -m src.main workspace` | 工作空间分析 |
+| `.venv/bin/python -m src.main trajectory` | 轨迹跟踪 |
+| `.venv/bin/python -m src.main ik_interactive` | 拖动 P7 目标点并实时逆解 |
+| `.venv/bin/python -m src.main ik` | 逆运动学演示 |
 
 **默认分支**: `branch_d=+1, branch_f=-1` (凸四边形).
 
@@ -164,8 +185,8 @@ Python ≥ 3.12, numpy, matplotlib, scipy, PyQt6
 
 ```
 src/
-  main.py          # 命令/演示入口: python -m src.main
-  zero_calib.py    # 零点校准图入口: python -m src.zero_calib
+  main.py          # 命令/演示入口: .venv/bin/python -m src.main
+  zero_calib.py    # 零点校准图入口: .venv/bin/python -m src.zero_calib
   geometry.py      # 2D 向量运算, 两圆相交
   mechanism.py     # 杆长参数定义
   kinematics.py    # 正逆运动学 + 全分支求解

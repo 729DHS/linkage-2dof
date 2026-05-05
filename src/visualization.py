@@ -554,3 +554,164 @@ def interactive_sliders(params: MechanismParams):
     update()
 
     plt.show()
+
+
+def interactive_inverse(params: MechanismParams):
+    """
+    Drag the end-effector target and show the inverse-kinematics angles.
+
+    The initial target matches zero_calib.py.  The displayed view is rotated
+    by -90 degrees, same as interactive_sliders().
+    """
+    from .kinematics import solve_inverse
+
+    def rotate_view(v):
+        return np.array([v[1], -v[0]])
+
+    def unrotate_view(v):
+        return np.array([-v[1], v[0]])
+
+    def wrap_angle(a):
+        return (a + np.pi) % (2 * np.pi) - np.pi
+
+    def angle_distance(sol, prev):
+        da = wrap_angle(sol['theta_a'] - prev[0])
+        db = wrap_angle(sol['theta_b'] - prev[1])
+        return da * da + db * db
+
+    view_xlim = (-280, 280)
+    view_ylim = (-260, 260)
+    target_radius = 9.0
+    ta0 = np.deg2rad(-162.4)
+    tb0 = np.deg2rad(-10.0)
+
+    fig = plt.figure(figsize=(10, 9))
+    ax = fig.add_axes([0.08, 0.18, 0.86, 0.78])
+    ax.set_aspect('equal')
+    ax.set_xlim(*view_xlim)
+    ax.set_ylim(*view_ylim)
+    ax.grid(True, alpha=0.3)
+    ax.set_xlabel('display X [mm]')
+    ax.set_ylabel('display Y [mm]')
+
+    bar_specs = [
+        ('O', 'P1', COLOR_BAR_A, 3.0, '-'),
+        ('O', 'P2', COLOR_BAR_A, 3.0, '-'),
+        ('P1', 'P2', COLOR_BAR_A, 1.5, '--'),
+        ('O', 'P3', COLOR_BAR_B, 3.0, '-'),
+        ('P3', 'P4', COLOR_BAR_C, 2.5, '-'),
+        ('P1', 'P4', COLOR_BAR_D, 3.0, '-'),
+        ('P1', 'P5', COLOR_BAR_D, 1.5, '--'),
+        ('P4', 'P5', COLOR_BAR_D, 1.5, '--'),
+        ('P5', 'P6', COLOR_BAR_E, 2.5, '-'),
+        ('P2', 'P6', COLOR_BAR_F, 3.0, '-'),
+        ('P2', 'P7', COLOR_BAR_F, 3.0, '-'),
+        ('P6', 'P7', COLOR_BAR_F, 1.5, '--'),
+    ]
+    bar_artists = [
+        (ka, kb, ax.plot([], [], color=color, lw=lw, ls=ls,
+                         zorder=2)[0])
+        for ka, kb, color, lw, ls in bar_specs
+    ]
+
+    joint_specs = {
+        'O': (COLOR_MOTOR, 80),
+        'P1': (COLOR_JOINT, 40),
+        'P2': (COLOR_JOINT, 40),
+        'P3': (COLOR_JOINT, 40),
+        'P4': (COLOR_JOINT, 40),
+        'P5': (COLOR_JOINT, 40),
+        'P6': (COLOR_JOINT, 40),
+        'P7': (COLOR_END, 80),
+    }
+    joint_artists = {
+        key: ax.scatter([], [], c=color, s=size, zorder=3,
+                        edgecolors='none')
+        for key, (color, size) in joint_specs.items()
+    }
+    target_artist = ax.scatter([], [], c='none', edgecolors='black',
+                               s=180, linewidths=1.8, zorder=5)
+    info_text = ax.text(0.02, 0.02, '', transform=ax.transAxes,
+                        ha='left', va='bottom', fontsize=11,
+                        bbox=dict(boxstyle='round,pad=0.35',
+                                  facecolor='white', alpha=0.85,
+                                  edgecolor='#999999'))
+
+    state = {
+        'dragging': False,
+        'theta': np.array([ta0, tb0]),
+        'target_base': None,
+    }
+
+    def draw_from_angles(theta_a, theta_b, target_base=None, status=''):
+        res = solve_linkage(theta_a, theta_b, params)
+        if res is None:
+            return
+
+        for key in ['O', 'P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7']:
+            res[key + '_view'] = rotate_view(res[key])
+
+        for ka, kb, artist in bar_artists:
+            a, b = res[ka + '_view'], res[kb + '_view']
+            artist.set_data([a[0], b[0]], [a[1], b[1]])
+            artist.set_visible(True)
+
+        for key, artist in joint_artists.items():
+            artist.set_offsets([res[key + '_view']])
+            artist.set_visible(True)
+
+        if target_base is None:
+            target_base = res['P7']
+        target_view = rotate_view(target_base)
+        target_artist.set_offsets([target_view])
+        state['target_base'] = target_base.copy()
+
+        info_text.set_text(
+            f"theta_a = {np.rad2deg(theta_a):7.2f} deg\n"
+            f"theta_b = {np.rad2deg(theta_b):7.2f} deg\n"
+            f"P7_base = ({target_base[0]:7.1f}, {target_base[1]:7.1f}) mm\n"
+            f"{status}"
+        )
+        ax.set_title(
+            "Inverse IK Drag Target  |  drag P7 ring to update theta_a/theta_b",
+            fontsize=11,
+        )
+        fig.canvas.draw_idle()
+
+    def update_target_from_view(x_view, y_view):
+        target_base = unrotate_view(np.array([x_view, y_view]))
+        sols = solve_inverse(target_base, params, elbow=0)
+        if not sols:
+            draw_from_angles(state['theta'][0], state['theta'][1],
+                             target_base=target_base, status='UNREACHABLE')
+            return
+        sol = min(sols, key=lambda s: angle_distance(s, state['theta']))
+        state['theta'][:] = [sol['theta_a'], sol['theta_b']]
+        draw_from_angles(sol['theta_a'], sol['theta_b'],
+                         target_base=target_base, status='reachable')
+
+    def on_press(event):
+        if event.inaxes != ax or event.xdata is None or event.ydata is None:
+            return
+        target_view = rotate_view(state['target_base'])
+        d = np.hypot(event.xdata - target_view[0], event.ydata - target_view[1])
+        if d <= target_radius * 2.5:
+            state['dragging'] = True
+            update_target_from_view(event.xdata, event.ydata)
+
+    def on_motion(event):
+        if not state['dragging']:
+            return
+        if event.inaxes != ax or event.xdata is None or event.ydata is None:
+            return
+        update_target_from_view(event.xdata, event.ydata)
+
+    def on_release(event):
+        state['dragging'] = False
+
+    fig.canvas.mpl_connect('button_press_event', on_press)
+    fig.canvas.mpl_connect('motion_notify_event', on_motion)
+    fig.canvas.mpl_connect('button_release_event', on_release)
+
+    draw_from_angles(ta0, tb0)
+    plt.show()
