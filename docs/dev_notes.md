@@ -103,21 +103,22 @@ Unit4 固件侧已实现 `linkage_kinematics.h`:
 
 当前仿真只有单腿局部基座坐标系；左右腿没有在仿真里单独建两个 CAD 坐标系。
 
-单腿局部模型中，硬件推到限位时的 CAD 绝对角为:
+单腿局部模型中，硬件推到限位时的 CAD 绝对角原始测量值为 `theta_a=-72.4°`, `theta_b=80.0°`。
+实车姿态验证后确认整体绝对参考轴还需要每个轴顺时针补 `90°`，因此当前用于固件的 CAD 零位角为:
 
 ```c
-theta_a_zero = -1.26364f;  // -72.4 deg
-theta_b_zero =  1.39626f;  //  80.0 deg
+theta_a_zero = -2.83442f;  // -162.4 deg
+theta_b_zero = -0.17453f;  //  -10.0 deg
 ```
 
 如果 Unit4 左右腿都按“各自独立、同向定义的局部基座坐标系”调用 FK/IK，则 4 电机零位偏移可用:
 
 ```c
 static const float cad_angle_at_zero[4] = {
-    -1.26364f,  // LEFT_THETA_A
-     1.39626f,  // LEFT_THETA_B
-    -1.26364f,  // RIGHT_THETA_A
-     1.39626f,  // RIGHT_THETA_B
+    -2.83442f,  // LEFT_THETA_A
+    -0.17453f,  // LEFT_THETA_B
+    -2.83442f,  // RIGHT_THETA_A
+    -0.17453f,  // RIGHT_THETA_B
 };
 ```
 

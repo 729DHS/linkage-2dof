@@ -16,8 +16,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PIC_DIR = PROJECT_ROOT / "pic"
 OUTPUT_PATH = PIC_DIR / "zero_calib.png"
 
-theta_a = np.deg2rad(-72.4)
-theta_b = np.deg2rad(80.0)
+theta_a = np.deg2rad(-162.4)
+theta_b = np.deg2rad(-10.0)
 phi     = np.deg2rad(13.9)
 
 params = default_params()

@@ -434,13 +434,13 @@ def interactive_sliders(params: MechanismParams):
     def rotate_view(v):
         return np.array([v[1], -v[0]])
 
-    # Fixed view bounds (mm), motor O at (0, 0) center
-    VIEW_XLIM = (-250, 250)
-    VIEW_YLIM = (-300, 100)
+    # Fixed view bounds (mm), motor O at (0, 0) center.
+    VIEW_XLIM = (-280, 280)
+    VIEW_YLIM = (-260, 260)
 
-    # Initial angles
-    ta0 = 0.0
-    tb0 = np.deg2rad(90)
+    # Initial angles match zero_calib.py.
+    ta0_deg = -162.4
+    tb0_deg = -10.0
 
     fig = plt.figure(figsize=(10, 9))
 
@@ -450,41 +450,77 @@ def interactive_sliders(params: MechanismParams):
     ax_mech.set_xlim(*VIEW_XLIM)
     ax_mech.set_ylim(*VIEW_YLIM)
     ax_mech.grid(True, alpha=0.3)
-    # Ground marker
-    ax_mech.axhline(y=VIEW_YLIM[0] + 20, color='brown', lw=4, alpha=0.5)
 
     # Slider axes
     ax_slider_a = fig.add_axes([0.16, 0.12, 0.72, 0.035])
     ax_slider_b = fig.add_axes([0.16, 0.06, 0.72, 0.035])
 
     slider_a = Slider(ax_slider_a, r'$\theta_a$ [deg]', -180, 180,
-                      valinit=0, valstep=1)
+                      valinit=ta0_deg, valstep=0.2, valfmt='%.1f')
     slider_b = Slider(ax_slider_b, r'$\theta_b$ [deg]', -180, 180,
-                      valinit=90, valstep=1)
+                      valinit=tb0_deg, valstep=0.2, valfmt='%.1f')
+
+    bar_specs = [
+        ('O', 'P1', COLOR_BAR_A, 3.0, '-'),
+        ('O', 'P2', COLOR_BAR_A, 3.0, '-'),
+        ('P1', 'P2', COLOR_BAR_A, 1.5, '--'),
+        ('O', 'P3', COLOR_BAR_B, 3.0, '-'),
+        ('P3', 'P4', COLOR_BAR_C, 2.5, '-'),
+        ('P1', 'P4', COLOR_BAR_D, 3.0, '-'),
+        ('P1', 'P5', COLOR_BAR_D, 1.5, '--'),
+        ('P4', 'P5', COLOR_BAR_D, 1.5, '--'),
+        ('P5', 'P6', COLOR_BAR_E, 2.5, '-'),
+        ('P2', 'P6', COLOR_BAR_F, 3.0, '-'),
+        ('P2', 'P7', COLOR_BAR_F, 3.0, '-'),
+        ('P6', 'P7', COLOR_BAR_F, 1.5, '--'),
+    ]
+    bar_artists = [
+        (ka, kb, ax_mech.plot([], [], color=color, lw=lw, ls=ls,
+                              zorder=2)[0])
+        for ka, kb, color, lw, ls in bar_specs
+    ]
+
+    joint_specs = {
+        'O': (COLOR_MOTOR, 80),
+        'P1': (COLOR_JOINT, 40),
+        'P2': (COLOR_JOINT, 40),
+        'P3': (COLOR_JOINT, 40),
+        'P4': (COLOR_JOINT, 40),
+        'P5': (COLOR_JOINT, 40),
+        'P6': (COLOR_JOINT, 40),
+        'P7': (COLOR_END, 80),
+    }
+    joint_artists = {
+        key: ax_mech.scatter([], [], c=color, s=size, zorder=3,
+                             edgecolors='none')
+        for key, (color, size) in joint_specs.items()
+    }
+    invalid_text = ax_mech.text(0, -100, "No solution for this branch",
+                                ha='center', va='center', fontsize=14,
+                                color='red', visible=False)
 
     def update(val=None):
         ta = np.deg2rad(slider_a.val)
         tb = np.deg2rad(slider_b.val)
 
         res = solve_linkage(ta, tb, params)
-        ax_mech.clear()
-        ax_mech.set_aspect('equal')
-        ax_mech.set_xlim(*VIEW_XLIM)
-        ax_mech.set_ylim(*VIEW_YLIM)
-        ax_mech.grid(True, alpha=0.3)
-        ax_mech.axhline(y=VIEW_YLIM[0] + 20, color='brown', lw=4, alpha=0.5)
 
         if res is not None:
             # Rotate all points by -90 deg for leg-down view
             res_rotated = {}
             for key in ['O', 'P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7']:
                 res_rotated[key] = rotate_view(res[key])
-            for key in ['theta_d', 'theta_f', 'valid', 'branch_d', 'branch_f']:
-                if key in res:
-                    res_rotated[key] = res[key]
 
-            plot_mechanism(res_rotated, params, ax=ax_mech,
-                          show_labels=False, title="")
+            for ka, kb, artist in bar_artists:
+                a, b = res_rotated[ka], res_rotated[kb]
+                artist.set_data([a[0], b[0]], [a[1], b[1]])
+                artist.set_visible(True)
+
+            for key, artist in joint_artists.items():
+                artist.set_offsets([res_rotated[key]])
+                artist.set_visible(True)
+
+            invalid_text.set_visible(False)
 
             dist_to_convex = np.linalg.norm(
                 res['P4'] - (res['P1'] + res['P3']))
@@ -500,8 +536,11 @@ def interactive_sliders(params: MechanismParams):
                 fontsize=11,
             )
         else:
-            ax_mech.text(0, -100, "No solution for this branch",
-                         ha='center', va='center', fontsize=14, color='red')
+            for _, _, artist in bar_artists:
+                artist.set_visible(False)
+            for artist in joint_artists.values():
+                artist.set_visible(False)
+            invalid_text.set_visible(True)
             ax_mech.set_title(f"No valid config for "
                               rf"$\theta_a={slider_a.val:.1f}°$, "
                               rf"$\theta_b={slider_b.val:.1f}°$")

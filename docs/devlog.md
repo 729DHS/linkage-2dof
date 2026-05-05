@@ -42,10 +42,12 @@
 
 | 参数 | 值 |
 |---|---:|
-| θa | -72.4° |
-| θb | 80.0° |
+| θa | -162.4° |
+| θb | -10.0° |
 | φ | 13.9° |
 | 轮子半径 | 30 mm |
+
+说明: 原始角度 `theta_a=-72.4°`, `theta_b=80.0°` 的相对姿态正确，但实车绝对朝向整体差 `90°`。当前零位角已统一顺时针补 `90°`。
 
 ---
 
@@ -66,14 +68,14 @@
 ### 当前零位值
 
 ```c
-theta_a_zero = -1.26364f;  // -72.4 deg
-theta_b_zero =  1.39626f;  //  80.0 deg
+theta_a_zero = -2.83442f;  // -162.4 deg
+theta_b_zero = -0.17453f;  //  -10.0 deg
 
 static const float cad_angle_at_zero[4] = {
-    -1.26364f,  // M1 LEFT_THETA_A
-     1.39626f,  // M2 LEFT_THETA_B
-    -1.26364f,  // M3 RIGHT_THETA_A
-     1.39626f,  // M4 RIGHT_THETA_B
+    -2.83442f,  // M1 LEFT_THETA_A
+    -0.17453f,  // M2 LEFT_THETA_B
+    -2.83442f,  // M3 RIGHT_THETA_A
+    -0.17453f,  // M4 RIGHT_THETA_B
 };
 ```
 

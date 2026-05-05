@@ -87,9 +87,8 @@ For smoother dragging, interactive mode shows only the default physical branch
 #### 画面说明 / View Layout
 
 - **电机轴 O 固定在画面中心** / Motor O fixed at view center
-- **视角不随角度变化** / View bounds locked (x: -250~250, y: -300~100 mm)
+- **视角不随角度变化** / View bounds locked (x: -280~280, y: -260~260 mm)
 - **整体旋转 -90°** (机构向下伸展，像腿一样) / Rotated -90° (leg points downward)
-- **底部棕色线** = 地面参考 / Brown line = ground reference
 - **标题栏** 显示: 角度、装配模式、平行四边形凹凸性、P7 坐标
 - **Title bar** shows: angles, branch, parallelogram type, P7 position
 
@@ -166,8 +165,8 @@ Generates `pic/zero_calib.png` from the current zero-position angles to check th
 initial joint zero offsets and the cart-frame relationship.
 
 当前参数 / Current constants:
-- θa = -72.4°
-- θb = 80.0°
+- θa = -162.4°
+- θb = -10.0°
 - φ = 13.9°
 - 轮子半径 / wheel radius = 30 mm
 
