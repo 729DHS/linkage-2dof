@@ -72,6 +72,104 @@ cd /home/huiming/桌面/sim/linkage/v1
 - 脚本移动到 `src/zero_calib.py`，以 `python -m src.zero_calib` 运行。
 - 生成图片输出到 `pic/zero_calib.png`，避免污染 `v1` 根目录。
 
+## Unit4 固件对接备忘
+
+### C 端接口现状
+
+Unit4 固件侧已实现 `linkage_kinematics.h`:
+- 正解: `lk_forward()`
+- 逆解: `lk_inverse()`
+- 接口与 Python 等效 2R 模型一致
+
+固化参数:
+
+```c
+#define LK_L1_MM 107.4f  // O -> P2
+#define LK_L2_MM 128.0f  // P2 -> P7
+```
+
+### 4 电机顺序
+
+| 索引 | 变量 | CAN | 角色 |
+|---:|---|---|---|
+| 0 | LEFT_THETA_A | CAN1 | 左腿 theta_a |
+| 1 | LEFT_THETA_B | CAN1 | 左腿 theta_b |
+| 2 | RIGHT_THETA_A | CAN2 | 右腿 theta_a |
+| 3 | RIGHT_THETA_B | CAN2 | 右腿 theta_b |
+
+每台 DM4310 直接对应等效 2R 模型的一个关节角。
+
+### CAD 零位角
+
+当前仿真只有单腿局部基座坐标系；左右腿没有在仿真里单独建两个 CAD 坐标系。
+
+单腿局部模型中，硬件推到限位时的 CAD 绝对角为:
+
+```c
+theta_a_zero = -1.26364f;  // -72.4 deg
+theta_b_zero =  1.39626f;  //  80.0 deg
+```
+
+如果 Unit4 左右腿都按“各自独立、同向定义的局部基座坐标系”调用 FK/IK，则 4 电机零位偏移可用:
+
+```c
+static const float cad_angle_at_zero[4] = {
+    -1.26364f,  // LEFT_THETA_A
+     1.39626f,  // LEFT_THETA_B
+    -1.26364f,  // RIGHT_THETA_A
+     1.39626f,  // RIGHT_THETA_B
+};
+```
+
+这组值的前提:
+- 左右腿 CAD 零位角使用同一套局部腿坐标定义。
+- 左右镜像不通过改 CAD 零位角实现。
+- Unit4 中 `MIRROR_SIGN = -1.0` 和右腿 FK 后 `right_pose.x_mm = -right_pose.x_mm` 负责车体层面的镜像。
+
+如果 CAD 角度是在共用车体坐标系下读取，而不是在左右腿各自局部基座下读取，则右腿零位可能不能直接复用左腿值，需要按 CAD 镜像关系重新换算。
+
+### 车体坐标变换
+
+当前 Python 零点图只确认了单腿基座局部坐标到车体显示方向的旋转:
+
+```text
+phi = 13.9 deg
+cart drawing angle = phi + 180 deg = 193.9 deg
+```
+
+零位姿态下，单腿局部 P7 转到车体显示方向后:
+
+```text
+P7_cart_rel_O = (-47.4, -36.1) mm
+```
+
+轮半径 30 mm，地面为 `Y=0` 时:
+
+```text
+P7_wheel_hub = (-47, 30) mm
+O_motor      = (0, 66) mm
+```
+
+这些值只说明“单腿图里的 O 和 P7 相对关系”，不能替代整车坐标系安装位姿。
+
+Unit4 若要输出末端车体坐标，还缺:
+- 车体参考原点定义，例如车体中心、底盘几何中心、左/右电机连线中点等。
+- 左腿基座 `O_left_body = (x_mm, y_mm)`。
+- 右腿基座 `O_right_body = (x_mm, y_mm)`。
+- 车体坐标轴定义: +X 向前/向右，+Y 向上/向前，需要与 C 端保持一致。
+
+建议 C 端车体变换保持显式:
+
+```c
+left_body.x_mm = O_left_body.x_mm + left_local.x_mm;
+left_body.y_mm = O_left_body.y_mm + left_local.y_mm;
+
+right_body.x_mm = O_right_body.x_mm - right_local.x_mm;
+right_body.y_mm = O_right_body.y_mm + right_local.y_mm;
+```
+
+这里的右腿 `x` 取负对应 Unit4 当前镜像约定；如果之后把旋转/平移统一成 2D rigid transform，则不要再重复做一次 `x` 镜像。
+
 ## 脚本模板
 
 ```python
