@@ -34,17 +34,17 @@ def to_cart(v):
 
 # Cart frame convention:
 #   +X is forward, +Y is up.
-#   The cart body is a horizontal rectangle.
-#   P7 is the wheel hub; the wheel circle sits below the cart and touches
-#   the ground at Y = 0.
+#   The cart body is a side-view rectangle.
+#   The origin is the coaxial motor center, placed at mid-height.
 wheel_radius = 30.0
-cart_body_w = 180.0
-cart_body_h = 24.0
+cart_body_w = 220.0
+cart_body_h = 100.0
+origin_y = 55.0
 p7_rel_cart = to_cart(res['P7'])
-wheel_cart = np.array([p7_rel_cart[0], wheel_radius])
-O_cart = wheel_cart - p7_rel_cart
-cart_body_y = O_cart[1] - cart_body_h * 0.5
-cart_body_x = O_cart[0] - cart_body_w * 0.5
+O_cart = np.array([0.0, origin_y])
+wheel_cart = O_cart + p7_rel_cart
+cart_body_x = -cart_body_w * 0.5
+cart_body_y = 0.0
 
 fig, (ax_l, ax_r) = plt.subplots(1, 2, figsize=(14, 7))
 bar_colors = ['#e74c3c','#e74c3c','#3498db','#2ecc71','#f39c12','#f39c12',
@@ -95,11 +95,13 @@ ax_r.annotate(f'O (motor)\n({O_cart[0]:.0f}, {O_cart[1]:.0f})',
               xytext=(6,-15), fontsize=9, fontweight='bold')
 ax_r.annotate(f'P7 (wheel hub)\n({wheel_cart[0]:.0f}, {wheel_cart[1]:.0f})', wheel_cart,
               textcoords='offset points', xytext=(10,-15), fontsize=9, color='green')
-
-# Ground at Y=0
-ax_r.axhline(0, color='#8B4513', lw=3, alpha=0.7)
-ax_r.annotate('GROUND', (wheel_cart[0]/2, 2), fontsize=11, color='#8B4513',
-              ha='center', fontweight='bold')
+ax_r.annotate('body height 100 mm', (-105, 94), fontsize=9, color='#505866',
+              fontweight='bold')
+ax_r.annotate('origin height 55 mm', (8, origin_y + 2), fontsize=9,
+              color='#8B0000', fontweight='bold')
+ax_r.annotate('body width 220 mm', (-108, -7), fontsize=9, color='#505866',
+              fontweight='bold')
+ax_r.annotate('vehicle width 150 mm', (8, 8), fontsize=9, color='#505866')
 
 # bar_b
 p3c = to_cart(res['P3']) + O_cart
@@ -109,7 +111,7 @@ ax_r.arrow(*O_cart, d3d[0], d3d[1], head_width=3, head_length=5,
 ax_r.annotate(f'bar_b', O_cart + d3d*0.8, fontsize=8, color='#3498db')
 
 ax_r.set_title(f'Cart Frame\n$\\phi$ = {np.rad2deg(phi):.1f}$^\\circ$  '
-               f'(body horizontal, wheel under body)', fontsize=12)
+               f'(side view: 220 x 100 mm, origin at y={origin_y:.0f} mm)', fontsize=12)
 ax_r.set_xlabel('X [mm] (forward)')
 ax_r.set_ylabel('Y [mm] ($\\uparrow$ up)')
 ax_r.set_aspect('equal'); ax_r.grid(True, alpha=0.3)
@@ -124,5 +126,7 @@ print(f'phi     = {np.rad2deg(phi):.1f} deg')
 print(f'cart drawing angle = phi + 180 deg = {np.rad2deg(cart_angle):.1f} deg')
 print(f'P7_cart (rel to O) = ({p7_rel_cart[0]:.1f}, {p7_rel_cart[1]:.1f})')
 print(f'wheel radius = {wheel_radius:.0f} mm')
+print(f'cart body size = {cart_body_w:.0f} x {cart_body_h:.0f} mm')
+print(f'origin height = {origin_y:.0f} mm')
 print(f'O_motor in cart frame  = ({O_cart[0]:.0f}, {O_cart[1]:.0f})')
 print(f'P7_wheel hub in cart frame = ({wheel_cart[0]:.0f}, {wheel_cart[1]:.0f})')
