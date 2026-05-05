@@ -10,11 +10,5 @@ wheels/
 .venv
 
 # Output files
-*.png
-*.gif
-*.mp4
-output_*
-animation.*
-
 # Lock files (use pyproject.toml)
 uv.lock
