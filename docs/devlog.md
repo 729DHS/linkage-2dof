@@ -42,6 +42,46 @@
 
 ---
 
+## 2026-05-05: Unit4 固件对接确认
+
+### 已确认事项
+
+- `linkage_kinematics.h` 已实现，正解 `lk_forward()`、逆解 `lk_inverse()` 都可用。
+- 接口与 Python 里的等效 2R 模型一致。
+- 4 电机顺序已和 Unit4 `main.c` / README 对齐：
+  - M1 `LEFT_THETA_A`
+  - M2 `LEFT_THETA_B`
+  - M3 `RIGHT_THETA_A`
+  - M4 `RIGHT_THETA_B`
+- 左右腿采用同一套局部基座坐标系，镜像在车体层处理。
+- `cad_angle_at_zero[4]` 已按仿真确认值填入代码。
+
+### 当前零位值
+
+```c
+theta_a_zero = -1.26364f;  // -72.4 deg
+theta_b_zero =  1.39626f;  //  80.0 deg
+
+static const float cad_angle_at_zero[4] = {
+    -1.26364f,  // M1 LEFT_THETA_A
+     1.39626f,  // M2 LEFT_THETA_B
+    -1.26364f,  // M3 RIGHT_THETA_A
+     1.39626f,  // M4 RIGHT_THETA_B
+};
+```
+
+### 仍缺的数据
+
+- 左右腿基座在车体坐标系中的安装位置。
+- 车体参考原点定义。
+- 车体系下左右腿末端输出的最终 rigid transform 约定。
+
+### 结论
+
+当前仿真侧已经把零位角、镜像约定、2R 解析参数和图示关系确认完毕。后续只需要补齐车体安装位姿，就能把末端位置完整转到整车坐标系。
+
+---
+
 ## 2026-05-04: 参数更新
 
 ### 用户提供实际杆长 (mm)
