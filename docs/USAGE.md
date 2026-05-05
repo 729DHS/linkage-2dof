@@ -69,13 +69,19 @@ Shows mechanism at default angles (θa=0°, θb=90°, **凸四边形 / convex pa
 
 Opens an interactive window with dragable sliders.
 
+交互模式为了保持拖动顺滑，只显示默认物理分支 (branch_d=+1, branch_f=-1)，滑块按 1° 步进更新。
+如需查看全部装配模式，请使用 `python -m src.main branches`。
+
+For smoother dragging, interactive mode shows only the default physical branch
+(branch_d=+1, branch_f=-1) and updates sliders in 1° steps. Use
+`python -m src.main branches` to inspect all assembly modes.
+
 #### 界面说明 / UI Elements
 
 | 元素 / Element | 位置 / Position | 功能 / Function |
 |---|---|---|
 | θa 滑块 / Slider | 左下 / Bottom-left | 拖动控制电机 A 转角 (-180° ~ 180°) / Drag to set motor A angle |
 | θb 滑块 / Slider | 左下 / Bottom-left | 拖动控制电机 B 转角 (-180° ~ 180°) / Drag to set motor B angle |
-| 分支选择 / Radio | 右下 / Bottom-right | 切换装配模式 (d=±1, f=±1) / Switch assembly branch |
 | 机构图 / Plot | 上方 / Top area | 实时机构图形 / Real-time mechanism view |
 
 #### 画面说明 / View Layout
