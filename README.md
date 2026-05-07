@@ -83,6 +83,8 @@ cd v1
 | `.venv/bin/python -m src.main trajectory` | Trajectory tracking |
 | `.venv/bin/python -m src.main ik_interactive` | Drag P7 target and solve IK |
 | `.venv/bin/python -m src.main ik` | Inverse kinematics demo |
+| `.venv/bin/python -m src.twin_calib` | Digital twin: real-time display (zero_calib style) |
+| `.venv/bin/python tools/serial_bridge.py --port /dev/ttyACM0` | Serial CSV → UDP bridge |
 
 **Default branch**: `branch_d=+1, branch_f=-1` (convex parallelogram).
 
@@ -97,11 +99,14 @@ Python ≥ 3.12, numpy, matplotlib, scipy, PyQt6
 ```
 src/
   main.py          # CLI/demo entry: .venv/bin/python -m src.main
+  twin_calib.py  # Digital twin: real-time display (zero_calib style)
   zero_calib.py    # Zero calibration plot: .venv/bin/python -m src.zero_calib
   geometry.py      # 2D vector math, circle intersection
   mechanism.py     # Bar length parameters
   kinematics.py    # FK / IK / all-branch solver
   visualization.py # Plots, animation, interactive sliders
+tools/
+  serial_bridge.py # Serial CSV → UDP bridge for digital twin
 pic/
   .gitkeep         # Generated images/animations are written here and ignored
 docs/
@@ -172,6 +177,8 @@ cd v1
 | `.venv/bin/python -m src.main trajectory` | 轨迹跟踪 |
 | `.venv/bin/python -m src.main ik_interactive` | 拖动 P7 目标点并实时逆解 |
 | `.venv/bin/python -m src.main ik` | 逆运动学演示 |
+| `.venv/bin/python -m src.twin_calib` | 数字孪生: 实时显示 (zero_calib 风格) |
+| `.venv/bin/python tools/serial_bridge.py --port /dev/ttyACM0` | 串口 CSV → UDP 桥接 |
 
 **默认分支**: `branch_d=+1, branch_f=-1` (凸四边形).
 
@@ -186,11 +193,14 @@ Python ≥ 3.12, numpy, matplotlib, scipy, PyQt6
 ```
 src/
   main.py          # 命令/演示入口: .venv/bin/python -m src.main
+  twin_calib.py    # 数字孪生: 实时显示 (zero_calib 风格)
   zero_calib.py    # 零点校准图入口: .venv/bin/python -m src.zero_calib
   geometry.py      # 2D 向量运算, 两圆相交
   mechanism.py     # 杆长参数定义
   kinematics.py    # 正逆运动学 + 全分支求解
   visualization.py # 绘图, 动画, 交互滑块
+tools/
+  serial_bridge.py # 串口 CSV → UDP 桥接 (数字孪生数据源)
 pic/
   .gitkeep         # 生成图片/动画统一输出到此目录并被忽略
 docs/
