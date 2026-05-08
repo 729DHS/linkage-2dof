@@ -9,8 +9,9 @@ Usage:
     .venv/bin/python -m src.main trajectory   # Trajectory following
     .venv/bin/python -m src.main branches     # Show all 4 assembly modes
     .venv/bin/python -m src.main interactive  # Interactive sliders for both angles
-    .venv/bin/python -m src.main ik_interactive # Drag P7 and solve inverse kinematics
+    .venv/bin/python -m src.main ik_interactive # Inverse kinematics drag (P7)
     .venv/bin/python -m src.main ik           # Inverse kinematics demo
+    .venv/bin/python -m src.main live_control # Live control: drag P7 → IK → safety → serial → MCU
 """
 
 import sys
@@ -28,6 +29,7 @@ from .visualization import (
     plot_all_branches, animate_mechanism, interactive_sliders,
     interactive_inverse,
 )
+from .live_control import run_live_control as _run_live_control
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PIC_DIR = PROJECT_ROOT / "pic"
@@ -245,11 +247,21 @@ def main():
         'interactive': lambda p: interactive_sliders(p),
         'ik_interactive': lambda p: interactive_inverse(p),
         'ik': demo_ik,
+        'live_control': lambda p: _run_live_control(p),
     }
 
     if len(sys.argv) > 1:
         cmd = sys.argv[1]
-        if cmd in cmds:
+        if cmd == 'live_control':
+            import argparse
+            ap = argparse.ArgumentParser()
+            ap.add_argument('--port', default=None, help='serial port')
+            ap.add_argument('--baud', type=int, default=115200)
+            ap.add_argument('--stdout', action='store_true')
+            ap.add_argument('--dry-run', action='store_true')
+            args, _ = ap.parse_known_args(sys.argv[2:])
+            _run_live_control(args)
+        elif cmd in cmds:
             cmds[cmd](params)
         else:
             print(f"Unknown command: {cmd}")

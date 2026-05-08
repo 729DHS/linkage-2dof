@@ -134,13 +134,13 @@ def main():
                       f"{frame_count} fr",
                       end="", flush=True)
 
-            res_l = solve_linkage(-left_a + OFFSET_A, -left_b + OFFSET_B, params)
-            res_r = solve_linkage(right_a + OFFSET_A, right_b + OFFSET_B, params)
-
             mech_la = -left_a + OFFSET_A
-            mech_lb = -left_b + OFFSET_B
-            mech_ra = right_a + OFFSET_A
-            mech_rb = right_b + OFFSET_B
+            mech_lb = left_b + OFFSET_B    # M2 dir=+1 (Unit5 2026-05-09)
+            mech_ra = -right_b + OFFSET_A   # CSV: right_b=M4 enc → θa (dir=-1)
+            mech_rb = right_a + OFFSET_B    # CSV: right_a=M3 enc → θb (dir=+1)
+
+            res_l = solve_linkage(mech_la, mech_lb, params)
+            res_r = solve_linkage(mech_ra, mech_rb, params)
 
             if res_l is not None:
                 draw_mechanism(ax_l, res_l, mech_la, mech_lb,
@@ -150,7 +150,7 @@ def main():
 
             if res_r is not None:
                 draw_mechanism(ax_r, res_r, mech_ra, mech_rb,
-                               'M3/M4', 'R Leg (CAN2)')
+                               'M4/M3', 'R Leg (CAN2)')
             else:
                 ax_r.set_title('R Leg: no solution')
 
