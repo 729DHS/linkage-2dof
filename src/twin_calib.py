@@ -24,6 +24,10 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from src.mechanism import default_params
 from src.kinematics import solve_linkage
 
+# mount_offset: encoder → mechanism-frame angle (与 twin_display.py 一致)
+OFFSET_A = np.deg2rad(-162.4)   # M1/M4 (θa)
+OFFSET_B = np.deg2rad(-10.0)    # M2/M3 (θb)
+
 BAR_COLORS = ['#e74c3c', '#e74c3c', '#3498db', '#2ecc71', '#f39c12',
               '#f39c12', '#9b59b6', '#1abc9c', '#1abc9c']
 BAR_PAIRS = [
@@ -123,30 +127,39 @@ def main():
             now = t_ms
             if now - last_print >= 1000:
                 last_print = now
-                print(f"\r  L: {np.rad2deg(left_a):+7.2f}  {np.rad2deg(left_b):+7.2f} deg  |  "
-                      f"R: {np.rad2deg(right_a):+7.2f}  {np.rad2deg(right_b):+7.2f} deg  |  "
+                print(f"\r  L: enc({np.rad2deg(left_a):+7.2f},{np.rad2deg(left_b):+7.2f})→"
+                      f"({np.rad2deg(mech_la):+7.2f},{np.rad2deg(mech_lb):+7.2f})  |  "
+                      f"R: enc({np.rad2deg(right_a):+7.2f},{np.rad2deg(right_b):+7.2f})→"
+                      f"({np.rad2deg(mech_ra):+7.2f},{np.rad2deg(mech_rb):+7.2f})  |  "
                       f"{frame_count} fr",
                       end="", flush=True)
 
-            res_l = solve_linkage(left_a, left_b, params)
-            res_r = solve_linkage(right_a, right_b, params)
+            res_l = solve_linkage(-left_a + OFFSET_A, -left_b + OFFSET_B, params)
+            res_r = solve_linkage(right_a + OFFSET_A, right_b + OFFSET_B, params)
+
+            mech_la = -left_a + OFFSET_A
+            mech_lb = -left_b + OFFSET_B
+            mech_ra = right_a + OFFSET_A
+            mech_rb = right_b + OFFSET_B
 
             if res_l is not None:
-                draw_mechanism(ax_l, res_l, left_a, left_b,
+                draw_mechanism(ax_l, res_l, mech_la, mech_lb,
                                'M1/M2', 'L Leg (CAN1)')
             else:
                 ax_l.set_title('L Leg: no solution')
 
             if res_r is not None:
-                draw_mechanism(ax_r, res_r, right_a, right_b,
+                draw_mechanism(ax_r, res_r, mech_ra, mech_rb,
                                'M3/M4', 'R Leg (CAN2)')
             else:
                 ax_r.set_title('R Leg: no solution')
 
             fig.suptitle(
                 f'Unit5 Digital Twin  |  t={t_ms}ms  |  '
-                f'L {np.rad2deg(left_a):+.1f}/{np.rad2deg(left_b):+.1f}  '
-                f'R {np.rad2deg(right_a):+.1f}/{np.rad2deg(right_b):+.1f} deg',
+                f'L enc({np.rad2deg(left_a):+.1f},{np.rad2deg(left_b):+.1f})→'
+                f'mech({np.rad2deg(mech_la):+.1f},{np.rad2deg(mech_lb):+.1f})  '
+                f'R enc({np.rad2deg(right_a):+.1f},{np.rad2deg(right_b):+.1f})→'
+                f'mech({np.rad2deg(mech_ra):+.1f},{np.rad2deg(mech_rb):+.1f})',
                 fontsize=10, fontweight='bold')
 
             plt.pause(0.03)

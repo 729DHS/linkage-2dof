@@ -593,9 +593,9 @@ def interactive_inverse(params: MechanismParams):
     LIMIT_MARGIN_IK = np.deg2rad(1.0)
 
     def _enc_in_limits(theta_a, theta_b):
-        """IK 解是否在编码器限位内 (检查 ±2π 等价位置)"""
-        ea = theta_a - OFFSET_IK_A
-        eb = theta_b - OFFSET_IK_B
+        """IK 解是否在左腿编码器限位内 (dir=-1: enc = -(θ - offset))"""
+        ea = -(theta_a - OFFSET_IK_A)
+        eb = -(theta_b - OFFSET_IK_B)
         lo_a, hi_a = ENC_LIM_A[0] + LIMIT_MARGIN_IK, ENC_LIM_A[1] - LIMIT_MARGIN_IK
         lo_b, hi_b = ENC_LIM_B[0] + LIMIT_MARGIN_IK, ENC_LIM_B[1] - LIMIT_MARGIN_IK
         in_a = any(lo_a <= ea + k * 2 * np.pi <= hi_a for k in [-2, -1, 0, 1, 2])
@@ -683,15 +683,15 @@ def interactive_inverse(params: MechanismParams):
         target_artist.set_offsets([target_view])
         state['target_base'] = target_base.copy()
 
-        ea = wrap_angle(theta_a - OFFSET_IK_A)
-        eb = wrap_angle(theta_b - OFFSET_IK_B)
+        ea = wrap_angle(-(theta_a - OFFSET_IK_A))
+        eb = wrap_angle(-(theta_b - OFFSET_IK_B))
         in_limit = _enc_in_limits(theta_a, theta_b)
         limit_str = "OK" if in_limit else "LIMIT!"
         info_text.set_text(
             f"theta_a = {np.rad2deg(theta_a):7.2f} deg  (enc_a={np.rad2deg(ea):+.1f})\n"
             f"theta_b = {np.rad2deg(theta_b):7.2f} deg  (enc_b={np.rad2deg(eb):+.1f})\n"
             f"P7_base = ({target_base[0]:7.1f}, {target_base[1]:7.1f}) mm\n"
-            f"enc limit: [{np.rad2deg(ENC_LIM_A[0]):+.0f}..{np.rad2deg(ENC_LIM_A[1]):+.0f}]  "
+            f"enc limit (L): [{np.rad2deg(ENC_LIM_A[0]):+.0f}..{np.rad2deg(ENC_LIM_A[1]):+.0f}]  "
             f"[{np.rad2deg(ENC_LIM_B[0]):+.0f}..{np.rad2deg(ENC_LIM_B[1]):+.0f}]  {limit_str}\n"
             f"{status}"
         )
@@ -713,8 +713,8 @@ def interactive_inverse(params: MechanismParams):
         valid_sols = [s for s in sols if _enc_in_limits(s['theta_a'], s['theta_b'])]
         if valid_sols:
             sol = min(valid_sols, key=lambda s: angle_distance(s, state['theta']))
-            ea = wrap_angle(sol['theta_a'] - OFFSET_IK_A)
-            eb = wrap_angle(sol['theta_b'] - OFFSET_IK_B)
+            ea = wrap_angle(-(sol['theta_a'] - OFFSET_IK_A))
+            eb = wrap_angle(-(sol['theta_b'] - OFFSET_IK_B))
             status = (f"OK  |  enc_a={np.rad2deg(ea):+.1f} [{np.rad2deg(ENC_LIM_A[0]):+.0f}"
                       f"..{np.rad2deg(ENC_LIM_A[1]):+.0f}]  "
                       f"enc_b={np.rad2deg(eb):+.1f} [{np.rad2deg(ENC_LIM_B[0]):+.0f}"
@@ -722,8 +722,8 @@ def interactive_inverse(params: MechanismParams):
         else:
             # 无可达限位内解: 选最近解并告警
             sol = min(sols, key=lambda s: angle_distance(s, state['theta']))
-            ea = wrap_angle(sol['theta_a'] - OFFSET_IK_A)
-            eb = wrap_angle(sol['theta_b'] - OFFSET_IK_B)
+            ea = wrap_angle(-(sol['theta_a'] - OFFSET_IK_A))
+            eb = wrap_angle(-(sol['theta_b'] - OFFSET_IK_B))
             status = (f"LIMIT EXCEEDED!  |  enc_a={np.rad2deg(ea):+.1f} "
                       f"enc_b={np.rad2deg(eb):+.1f}")
 
