@@ -291,13 +291,13 @@ class TwinWindow(QMainWindow):
 
         self._params = default_params()
 
-        # 两个面板: 左 M1→θa(+1),M2→θb(+1) | 右 M4→θa(-1),M3→θb(+1)
+        # 两个面板: 左 M1→θa(-1),M2→θb(-1) | 右 M3→θa(+1),M4→θb(+1)
         self._left_panel = LegPanel("左腿 (M1=θa, M2=θb)", self._params,
-                                    dir_a=1.0, dir_b=1.0,
+                                    dir_a=-1.0, dir_b=-1.0,
                                     limit_a=ENC_LIMIT_LEFT['a'],
                                     limit_b=ENC_LIMIT_LEFT['b'])
-        self._right_panel = LegPanel("右腿 (M4=θa, M3=θb)", self._params,
-                                     dir_a=-1.0, dir_b=1.0,
+        self._right_panel = LegPanel("右腿 (M3=θa, M4=θb)", self._params,
+                                     dir_a=1.0, dir_b=1.0,
                                      limit_a=ENC_LIMIT_RIGHT['a'],
                                      limit_b=ENC_LIMIT_RIGHT['b'])
 
@@ -355,7 +355,7 @@ class TwinWindow(QMainWindow):
                 continue
 
             self._left_panel.update_encoders(left_a, left_b)
-            self._right_panel.update_encoders(right_b, right_a)  # M4→θa, M3→θb
+            self._right_panel.update_encoders(right_a, right_b)  # M3→θa, M4→θb
 
             if self._frame_count == 0:
                 print(f"[twin] 首帧: t={t_ms} L=({left_a:.4f},{left_b:.4f}) R=({right_a:.4f},{right_b:.4f})", flush=True)
@@ -364,9 +364,9 @@ class TwinWindow(QMainWindow):
             self._status_label.setText(
                 f"t={t_ms} ms  |  "
                 f"L: M1/2 enc({np.rad2deg(left_a):+.1f},{np.rad2deg(left_b):+.1f}) → "
-                f"mech({np.rad2deg(left_a + OFFSET_A):+.1f},{np.rad2deg(left_b + OFFSET_B):+.1f})  |  "
+                f"mech({np.rad2deg(-left_a + OFFSET_A):+.1f},{np.rad2deg(-left_b + OFFSET_B):+.1f})  |  "
                 f"R: M3/4 enc({np.rad2deg(right_a):+.1f},{np.rad2deg(right_b):+.1f}) → "
-                f"mech({np.rad2deg(-right_b + OFFSET_A):+.1f},{np.rad2deg(right_a + OFFSET_B):+.1f})"
+                f"mech({np.rad2deg(right_a + OFFSET_A):+.1f},{np.rad2deg(right_b + OFFSET_B):+.1f})"
             )
 
     def _update_fps(self):
