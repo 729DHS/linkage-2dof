@@ -74,24 +74,51 @@ def rotate_view(v: np.ndarray) -> np.ndarray:
     return np.array([v[1], -v[0]])
 
 
+# mount_offset: encoder → mechanism-frame angle
+OFFSET_A = np.deg2rad(-162.4)   # M1/M4 (θa)
+OFFSET_B = np.deg2rad(-10.0)    # M2/M3 (θb)
+
+# 实车实测编码器限位 (rad), 2026-05-08 bring-up
+#   Row1 (后限位): 1.67, 1.61, -1.62, -1.54
+#   Row2 (前限位): -3.40, -3.30, 3.40, 3.20
+#   Row3 (b杆后限): 1.65, 3.14, -1.66, -3.14
+ENC_LIMIT_LEFT  = {'a': (-3.40, 1.67), 'b': (-3.30, 3.14)}
+ENC_LIMIT_RIGHT = {'a': (-1.66, 3.40), 'b': (-3.14, 3.20)}
+LIMIT_MARGIN = np.deg2rad(5.0)  # 5° 预警余量
+
+
 class LegPanel(QWidget):
     """单腿连杆机构绘制面板"""
 
-    def __init__(self, title: str, params: MechanismParams):
+    def __init__(self, title: str, params: MechanismParams,
+                 offset_a: float = OFFSET_A, offset_b: float = OFFSET_B,
+                 dir_a: float = 1.0, dir_b: float = 1.0,
+                 limit_a: tuple = None, limit_b: tuple = None):
         super().__init__()
         self._title = title
         self._params = params
-        self._result = None       # solve_linkage 返回的 dict
-        self._theta_a = 0.0
+        self._offset_a = offset_a
+        self._offset_b = offset_b
+        self._dir_a = dir_a
+        self._dir_b = dir_b
+        self._limit_a = limit_a or (-99, 99)
+        self._limit_b = limit_b or (-99, 99)
+        self._result = None
+        self._theta_m = 0.0   # mechanism-frame angle
         self._theta_b = 0.0
+        self._enc_a = 0.0     # raw encoder
+        self._enc_b = 0.0
         self._frame_count = 0
-        self.setMinimumSize(350, 400)
+        self.setMinimumSize(350, 420)
         self.setMouseTracking(True)
 
-    def update_angles(self, theta_a: float, theta_b: float):
-        self._theta_a = theta_a
-        self._theta_b = theta_b
-        self._result = solve_linkage(theta_a, theta_b, self._params)
+    def update_encoders(self, enc_a: float, enc_b: float):
+        """输入原始编码器值(rad), 内部加方向+offset 转机构帧"""
+        self._enc_a = enc_a
+        self._enc_b = enc_b
+        self._theta_m = self._dir_a * enc_a + self._offset_a
+        self._theta_b = self._dir_b * enc_b + self._offset_b
+        self._result = solve_linkage(self._theta_m, self._theta_b, self._params)
         self._frame_count += 1
         self.update()
 
@@ -100,7 +127,7 @@ class LegPanel(QWidget):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         w, h = self.width(), self.height()
-        cx, cy = w / 2, h / 2
+        cx, cy = w // 2, h // 2
 
         # 背景
         painter.fillRect(0, 0, w, h, COLOR_BG)
@@ -128,8 +155,8 @@ class LegPanel(QWidget):
             painter.setPen(QColor('#999999'))
             font = QFont('Sans', 11)
             painter.setFont(font)
-            painter.drawText(QRectF(0, cy - 15, w, 30),
-                             Qt.AlignmentFlag.AlignCenter, "等待数据...")
+            painter.drawText(QRectF(0, cy - 30, w, 30),
+                             Qt.AlignmentFlag.AlignCenter, "等待数据...\n(若姿态全伸展,检查OFFSET)")
             painter.end()
             return
 
@@ -176,19 +203,73 @@ class LegPanel(QWidget):
         painter.drawEllipse(int(p7[0] - hub_px), int(p7[1] - hub_px),
                             int(hub_px * 2), int(hub_px * 2))
 
-        # 角度信息
-        font_info = QFont('Monospace', 9)
+        # 信息区域: 编码器 → 机构帧 → h/φ
+        font_info = QFont('Monospace', 8)
         painter.setFont(font_info)
         painter.setPen(QColor('#555555'))
-        deg_a = np.rad2deg(self._theta_a)
-        deg_b = np.rad2deg(self._theta_b)
-        y_base = h - 38
-        painter.drawText(8, y_base, f"θa={deg_a:+7.1f}°")
-        painter.drawText(8, y_base + 15, f"θb={deg_b:+7.1f}°")
 
-        p7_pos = res['P7']
-        painter.drawText(8, y_base + 30,
-                         f"P7=({p7_pos[0]:.0f}, {p7_pos[1]:.0f}) mm")
+        y_base = h - 82
+        deg_ea = np.rad2deg(self._enc_a)
+        deg_eb = np.rad2deg(self._enc_b)
+        deg_ma = np.rad2deg(self._theta_m)
+        deg_mb = np.rad2deg(self._theta_b)
+
+        p7 = res['P7']
+        hp = np.hypot(p7[0], p7[1])
+        phi = -np.arctan2(p7[1], p7[0]) - np.pi/2
+
+        lines = [
+            f"enc:  M1={deg_ea:+7.1f}  M2={deg_eb:+7.1f} deg",
+            f"mech: θa={deg_ma:+7.1f}  θb={deg_mb:+7.1f} deg",
+            f"h={hp:.0f} mm  φ={np.rad2deg(phi):+.1f} deg",
+        ]
+        for i, line in enumerate(lines):
+            painter.drawText(8, y_base + i * 14, line)
+
+        # 编码器限位条 (a/b 各一条)
+        bar_w, bar_h = 120, 5
+        bar_x, bar_y_a, bar_y_b = w - bar_w - 10, y_base - 4, y_base + 10
+        for enc_val, (lo, hi), bar_y, label in [
+            (self._enc_a, self._limit_a, bar_y_a, 'enc_a'),
+            (self._enc_b, self._limit_b, bar_y_b, 'enc_b'),
+        ]:
+            rng = hi - lo
+            if rng <= 0:
+                continue
+            frac = np.clip((enc_val - lo) / rng, 0, 1)
+            # 底色 (灰)
+            painter.fillRect(bar_x, bar_y, bar_w, bar_h, QColor('#E0E0E0'))
+            # 限位范围 (浅蓝)
+            painter.fillRect(bar_x, bar_y, int(bar_w * frac), bar_h,
+                             BAR_COLORS['bar_a'])
+            # 边界标记
+            painter.setPen(QPen(QColor('#888888'), 1))
+            painter.drawRect(bar_x, bar_y, bar_w, bar_h)
+            # 标签
+            painter.setPen(QColor('#555555'))
+            font_tiny = QFont('Monospace', 6)
+            painter.setFont(font_tiny)
+            painter.drawText(bar_x + bar_w + 4, bar_y + 5,
+                             f"{np.rad2deg(lo):+.0f}…{np.rad2deg(hi):+.0f}°")
+            # 越界告警
+            near = LIMIT_MARGIN
+            if enc_val < lo + near or enc_val > hi - near:
+                painter.setPen(QColor('#E91E63'))
+                font_warn = QFont('Sans', 9, QFont.Weight.Bold)
+                painter.setFont(font_warn)
+                painter.drawText(bar_x, bar_y - 10, "LIMIT!")
+
+        # h 限位指示
+        h_limits = [
+            (hp < 45, "h<45!"),
+            (hp > 235, "h>235!"),
+        ]
+        for i, (cond, txt) in enumerate(h_limits):
+            if cond:
+                painter.setPen(QColor('#E91E63'))
+                font_warn = QFont('Sans', 10, QFont.Weight.Bold)
+                painter.setFont(font_warn)
+                painter.drawText(8, y_base + 52 + i * 14, txt)
 
         painter.end()
 
@@ -210,9 +291,15 @@ class TwinWindow(QMainWindow):
 
         self._params = default_params()
 
-        # 两个面板
-        self._left_panel = LegPanel("左腿 (M1/M2 — CAN1)", self._params)
-        self._right_panel = LegPanel("右腿 (M3/M4 — CAN2)", self._params)
+        # 两个面板: 左 M1→θa(+1),M2→θb(+1) | 右 M4→θa(-1),M3→θb(+1)
+        self._left_panel = LegPanel("左腿 (M1=θa, M2=θb)", self._params,
+                                    dir_a=1.0, dir_b=1.0,
+                                    limit_a=ENC_LIMIT_LEFT['a'],
+                                    limit_b=ENC_LIMIT_LEFT['b'])
+        self._right_panel = LegPanel("右腿 (M4=θa, M3=θb)", self._params,
+                                     dir_a=-1.0, dir_b=1.0,
+                                     limit_a=ENC_LIMIT_RIGHT['a'],
+                                     limit_b=ENC_LIMIT_RIGHT['b'])
 
         central = QWidget()
         layout = QHBoxLayout(central)
@@ -249,12 +336,13 @@ class TwinWindow(QMainWindow):
                 self._sock.pendingDatagramSize()
             )
             try:
-                text = data.data().decode('utf-8', errors='replace').strip()
+                text = data.decode('utf-8', errors='replace').strip()
             except UnicodeDecodeError:
                 continue
 
             parts = text.split(',')
             if len(parts) != 5:
+                print(f"[twin] 字段数异常: {len(parts)} -> {text!r}", flush=True)
                 continue
 
             try:
@@ -266,14 +354,19 @@ class TwinWindow(QMainWindow):
             except ValueError:
                 continue
 
-            self._left_panel.update_angles(left_a, left_b)
-            self._right_panel.update_angles(right_a, right_b)
+            self._left_panel.update_encoders(left_a, left_b)
+            self._right_panel.update_encoders(right_b, right_a)  # M4→θa, M3→θb
+
+            if self._frame_count == 0:
+                print(f"[twin] 首帧: t={t_ms} L=({left_a:.4f},{left_b:.4f}) R=({right_a:.4f},{right_b:.4f})", flush=True)
 
             self._frame_count += 1
             self._status_label.setText(
                 f"t={t_ms} ms  |  "
-                f"L: θa={np.rad2deg(left_a):+.1f}°  θb={np.rad2deg(left_b):+.1f}°  |  "
-                f"R: θa={np.rad2deg(right_a):+.1f}°  θb={np.rad2deg(right_b):+.1f}°"
+                f"L: M1/2 enc({np.rad2deg(left_a):+.1f},{np.rad2deg(left_b):+.1f}) → "
+                f"mech({np.rad2deg(left_a + OFFSET_A):+.1f},{np.rad2deg(left_b + OFFSET_B):+.1f})  |  "
+                f"R: M3/4 enc({np.rad2deg(right_a):+.1f},{np.rad2deg(right_b):+.1f}) → "
+                f"mech({np.rad2deg(-right_b + OFFSET_A):+.1f},{np.rad2deg(right_a + OFFSET_B):+.1f})"
             )
 
     def _update_fps(self):
